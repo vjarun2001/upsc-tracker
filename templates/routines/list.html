@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+Routines
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <div class="row g-3">
+
+            {% for routine in routines %}
+
+            {% with today_log=routine.today_log %}
+
+            <div class="col-md-6">
+
+                <div class="card shadow-sm h-100">
+
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">{{ routine.name }}</h5>
+                            <form method="post" action="{% url 'routines:delete' routine.pk %}" onsubmit="return confirm('Delete this routine?');">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+
+                        <p class="text-muted mb-2">
+                            Target: {{ routine.target_minutes }} min/day
+                            {% if today_log %}
+                            — Logged today: <strong>{{ today_log.minutes_spent }} min</strong> at {{ today_log.logged_time|time:"H:i" }}
+                            {% endif %}
+                        </p>
+
+                        {% with minutes=today_log.minutes_spent|default:0 %}
+                        <div class="progress mb-3" style="height:8px;">
+                            <div class="progress-bar bg-success" style="width:{% widthratio minutes routine.target_minutes 100 %}%;"></div>
+                        </div>
+                        {% endwith %}
+
+                        <form method="post" action="{% url 'routines:log' routine.pk %}" class="row g-2 align-items-end">
+                            {% csrf_token %}
+                            <div class="col-5">
+                                <label class="form-label small mb-0">Minutes</label>
+                                <input type="number" name="minutes_spent" class="form-control form-control-sm" value="{{ today_log.minutes_spent|default:routine.target_minutes }}" min="0" required>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label small mb-0">Time</label>
+                                <input type="time" name="logged_time" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-2">
+                                <button class="btn btn-sm btn-primary w-100">Log</button>
+                            </div>
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endwith %}
+
+            {% empty %}
+
+            <div class="alert alert-info">No routines yet. Create your first one.</div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Create Routine</strong></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'routines:add' %}">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button class="btn btn-primary w-100">Create</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

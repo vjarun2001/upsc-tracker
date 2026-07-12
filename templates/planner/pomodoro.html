@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}
+Pomodoro Timer
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-lg-6">
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-body text-center p-4">
+
+                <div class="btn-group mb-4" role="group">
+                    <button type="button" class="btn btn-outline-primary type-btn active" data-type="focus" data-minutes="25">Focus</button>
+                    <button type="button" class="btn btn-outline-success type-btn" data-type="short_break" data-minutes="5">Short Break</button>
+                    <button type="button" class="btn btn-outline-warning type-btn" data-type="long_break" data-minutes="15">Long Break</button>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Minutes</label>
+                    <input type="number" min="1" max="180" id="minutes-input" class="form-control w-50 mx-auto text-center" value="25">
+                </div>
+
+                <div id="timer-display" class="display-1 fw-bold my-4">25:00</div>
+
+                <div class="mb-4">
+                    <button id="btn-start" class="btn btn-primary btn-lg">Start</button>
+                    <button id="btn-pause" class="btn btn-secondary btn-lg d-none">Pause</button>
+                    <button id="btn-resume" class="btn btn-primary btn-lg d-none">Resume</button>
+                    <button id="btn-stop" class="btn btn-danger btn-lg d-none">Stop</button>
+                </div>
+
+                <div class="row text-start">
+
+                    <div class="col-6">
+                        <label class="form-label">Link to Task</label>
+                        <select id="task-select" class="form-select">
+                            <option value="">-- None --</option>
+                            {% for task in today_tasks %}
+                            <option value="{{ task.pk }}">{{ task.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Link to Subject</label>
+                        <select id="subject-select" class="form-select">
+                            <option value="">-- None --</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.pk }}">{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+                <strong>Today's Sessions</strong>
+            </div>
+
+            <ul id="session-history" class="list-group list-group-flush">
+
+                {% for session in recent_sessions %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ session.get_session_type_display }}</span>
+                    <span>{% widthratio session.actual_duration_seconds 60 1 %} min {% if session.is_completed %}✅{% else %}⏹{% endif %}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No sessions logged yet today.</li>
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</div>
+
+{{ client_config|json_script:"planner-config" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pomodoro.js' %}"></script>
+{% endblock %}

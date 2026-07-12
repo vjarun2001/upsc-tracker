@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+Mock Test Analysis
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header"><strong>My Mock Tests</strong></div>
+
+            <div class="card-body p-0">
+
+                {% if tests %}
+
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Test</th>
+                                <th>Date</th>
+                                <th>Correct</th>
+                                <th>Incorrect</th>
+                                <th>Unattempted</th>
+                                <th>Accuracy</th>
+                                <th>Marks</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for test in tests %}
+                            <tr>
+                                <td>
+                                    {{ test.name }}
+                                    {% if test.subject %}
+                                    <span class="badge rounded-pill" style="background:{{ test.subject.color }};">&nbsp;</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ test.test_date }}</td>
+                                <td class="text-success">{{ test.correct }}</td>
+                                <td class="text-danger">{{ test.incorrect }}</td>
+                                <td class="text-muted">{{ test.unattempted }}</td>
+                                <td>{{ test.accuracy_percent }}%</td>
+                                <td><strong>{{ test.obtained_marks }}</strong></td>
+                                <td>
+                                    <form method="post" action="{% url 'mocktest:delete' test.pk %}" onsubmit="return confirm('Delete this test?');">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+
+                <div class="alert alert-info m-3">No mock tests logged yet.</div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Log Mock Test</strong></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'mocktest:add' %}">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button class="btn btn-primary w-100">Save</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

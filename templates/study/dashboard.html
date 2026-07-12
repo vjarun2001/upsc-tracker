@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+Study Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h2>{{ total_subjects }}</h2>
+
+                <p>Subjects</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h2>{{ total_topics }}</h2>
+
+                <p>Topics</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h2>{{ completed_topics }}</h2>
+
+                <p>Completed</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h2>{{ total_minutes }}</h2>
+
+                <p>Minutes Studied</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+
+                <strong>My Subjects</strong>
+
+            </div>
+
+            <div class="card-body">
+
+                {% if subjects %}
+
+                    <div class="accordion" id="subjectsAccordion">
+
+                        {% for subject in subjects %}
+
+                        <div class="accordion-item">
+
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#subject-{{ subject.pk }}">
+
+                                    <span class="badge rounded-pill me-2" style="background:{{ subject.color }};">&nbsp;</span>
+
+                                    {{ subject.name }}
+
+                                    <span class="badge bg-secondary ms-2">{{ subject.topics.count }} Topics</span>
+
+                                </button>
+                            </h2>
+
+                            <div id="subject-{{ subject.pk }}" class="accordion-collapse collapse" data-bs-parent="#subjectsAccordion">
+
+                                <div class="accordion-body">
+
+                                    {% if subject.topics.all %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for topic in subject.topics.all %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span class="{% if topic.is_completed %}text-decoration-line-through text-muted{% endif %}">
+                                                {{ topic.title }}
+                                            </span>
+                                            <form method="post" action="{% url 'study:toggle_topic' topic.pk %}">
+                                                {% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-success">
+                                                    {% if topic.is_completed %}Undo{% else %}Mark Done{% endif %}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                    <p class="text-muted mb-0">No topics yet under this subject.</p>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-info">
+
+                        No subjects created yet.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+
+                <strong>Add Subject</strong>
+
+            </div>
+
+            <div class="card-body">
+
+                <form method="post"
+                      action="{% url 'study:add_subject' %}">
+
+                    {% csrf_token %}
+
+                    {{ form|crispy }}
+
+                    <button class="btn btn-primary w-100">
+
+                        Add Subject
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow-sm mt-3">
+
+            <div class="card-header">
+
+                <strong>Add Topic</strong>
+
+            </div>
+
+            <div class="card-body">
+
+                <form method="post"
+                      action="{% url 'study:add_topic' %}">
+
+                    {% csrf_token %}
+
+                    {{ topic_form|crispy }}
+
+                    <button class="btn btn-primary w-100">
+
+                        Add Topic
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

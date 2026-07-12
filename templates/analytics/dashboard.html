@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}
+Analytics
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h4 class="mb-0">
+        Analytics
+        {% if streak %}
+        <span class="badge bg-warning text-dark">🔥 {{ streak }} day streak</span>
+        {% endif %}
+    </h4>
+
+    <a class="btn btn-outline-primary" href="{% url 'analytics:export_pdf' %}">
+        <i class="bi bi-file-earmark-pdf"></i> Export PDF Report
+    </a>
+
+</div>
+
+<div class="card shadow-sm mb-4 fade-in-up">
+
+    <div class="card-body">
+
+        <div class="row align-items-center g-4">
+
+            <div class="col-md-2 text-center">
+                <div class="progress-ring" style="--percent: {{ recap.study_percent }};">
+                    <div class="progress-ring-inner">
+                        <span>{{ recap.study_percent }}%</span>
+                        <small class="text-muted">of {{ recap.daily_target_minutes }}m</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-10">
+
+                <h5 class="mb-2">Today's Recap</h5>
+                <p class="mb-2">{{ recap.headline }}</p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    {% for highlight in recap.highlights %}
+                    <span class="badge bg-light text-dark border">{{ highlight }}</span>
+                    {% empty %}
+                    <span class="text-muted">Nothing logged yet — get started!</span>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row mb-4 g-3">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm"><div class="card-body text-center">
+            <h2>{{ total_subjects }}</h2><p class="mb-0">Subjects</p>
+        </div></div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm"><div class="card-body text-center">
+            <h2>{{ completed_topics }}/{{ total_topics }}</h2><p class="mb-0">Topics Done</p>
+        </div></div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm"><div class="card-body text-center">
+            <h2>{{ total_minutes }}</h2><p class="mb-0">Minutes Studied</p>
+        </div></div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm"><div class="card-body text-center">
+            <h2>{{ total_mock_tests }}</h2><p class="mb-0">Mock Tests</p>
+        </div></div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Minutes Studied Per Subject</strong></div>
+            <div class="card-body"><canvas id="subjectChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Daily Study Minutes (Last 14 Days)</strong></div>
+            <div class="card-body"><canvas id="dailyChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Topic Completion % by Subject</strong></div>
+            <div class="card-body"><canvas id="topicChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Mock Test Marks Trend</strong></div>
+            <div class="card-body"><canvas id="mockChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>Today's Routine Minutes</strong></div>
+            <div class="card-body"><canvas id="routineChart"></canvas></div>
+        </div>
+    </div>
+
+</div>
+
+{{ chart_data|json_script:"chart-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const chartData = JSON.parse(document.getElementById("chart-data").textContent);
+
+    new Chart(document.getElementById("subjectChart"), {
+        type: "bar",
+        data: {
+            labels: chartData.subject_labels,
+            datasets: [{ label: "Minutes", data: chartData.subject_minutes, backgroundColor: "#0d6efd" }],
+        },
+        options: { plugins: { legend: { display: false } } },
+    });
+
+    new Chart(document.getElementById("dailyChart"), {
+        type: "line",
+        data: {
+            labels: chartData.daily_labels,
+            datasets: [{ label: "Minutes", data: chartData.daily_minutes, borderColor: "#198754", tension: 0.3 }],
+        },
+    });
+
+    new Chart(document.getElementById("topicChart"), {
+        type: "doughnut",
+        data: {
+            labels: chartData.topic_labels,
+            datasets: [{ data: chartData.topic_percentages, backgroundColor: ["#0d6efd", "#198754", "#ffc107", "#dc3545", "#6f42c1", "#20c997"] }],
+        },
+    });
+
+    new Chart(document.getElementById("mockChart"), {
+        type: "line",
+        data: {
+            labels: chartData.mock_labels,
+            datasets: [
+                { label: "Marks", data: chartData.mock_marks, borderColor: "#0d6efd", tension: 0.3 },
+                { label: "Accuracy %", data: chartData.mock_accuracy, borderColor: "#ffc107", tension: 0.3 },
+            ],
+        },
+    });
+
+    new Chart(document.getElementById("routineChart"), {
+        type: "bar",
+        data: {
+            labels: chartData.routine_labels,
+            datasets: [{ label: "Minutes", data: chartData.routine_minutes, backgroundColor: "#6f42c1" }],
+        },
+        options: { plugins: { legend: { display: false } } },
+    });
+</script>
+{% endblock %}

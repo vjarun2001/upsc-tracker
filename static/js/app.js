@@ -1,0 +1,1 @@
+console.log("UPSC Tracker Loaded");

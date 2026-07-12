@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+Daily Planner
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <a class="btn btn-outline-secondary"
+       href="{% url 'planner:day' prev_date.year prev_date.month prev_date.day %}">
+        &laquo; Prev
+    </a>
+
+    <div class="text-center">
+
+        <h4 class="mb-0">{{ view_date|date:"l, d M Y" }}</h4>
+
+        {% if view_date != today %}
+        <a class="small" href="{% url 'planner:day_today' %}">Back to Today</a>
+        {% endif %}
+
+    </div>
+
+    <a class="btn btn-outline-secondary"
+       href="{% url 'planner:day' next_date.year next_date.month next_date.day %}">
+        Next &raquo;
+    </a>
+
+</div>
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+                <strong>Tasks</strong>
+            </div>
+
+            <div class="card-body">
+
+                {% if tasks %}
+
+                    <div class="list-group">
+
+                        {% for task in tasks %}
+
+                        <div class="list-group-item d-flex justify-content-between align-items-center {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}"
+                             data-task-row>
+
+                            <div class="form-check">
+
+                                <input class="form-check-input task-toggle"
+                                       type="checkbox"
+                                       {% if task.is_completed %}checked{% endif %}
+                                       data-url="{% url 'planner:toggle_task' task.pk %}">
+
+                                <label class="form-check-label">
+
+                                    {% if task.subject %}
+                                    <span class="badge rounded-pill" style="background:{{ task.subject.color }};">&nbsp;</span>
+                                    {% endif %}
+
+                                    {{ task.title }}
+
+                                    {% if task.start_time %}
+                                    <span class="badge bg-secondary">{{ task.start_time|time:"H:i" }}{% if task.end_time %}-{{ task.end_time|time:"H:i" }}{% endif %}</span>
+                                    {% endif %}
+
+                                </label>
+
+                            </div>
+
+                            <div>
+
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="{% url 'planner:pomodoro' %}?task={{ task.pk }}">
+                                    <i class="bi bi-stopwatch"></i>
+                                </a>
+
+                                <button class="btn btn-sm btn-outline-danger task-delete"
+                                        data-url="{% url 'planner:delete_task' task.pk %}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-info">
+                        No tasks planned for this day yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+                <strong>Add Task</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form method="post" action="{% url 'planner:add_task' %}">
+
+                    {% csrf_token %}
+
+                    <input type="hidden" name="date" value="{{ view_date|date:'Y-m-d' }}">
+
+                    {{ form|crispy }}
+
+                    <button class="btn btn-primary w-100">
+                        Add Task
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/planner-day.js' %}"></script>
+{% endblock %}

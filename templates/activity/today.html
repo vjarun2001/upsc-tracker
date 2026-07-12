@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+Today's Activity
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-header"><strong>Today's Activity</strong></div>
+
+    <div class="card-body">
+
+        {% if activities %}
+
+        <div class="list-group list-group-flush">
+
+            {% for activity in activities %}
+
+            <div class="list-group-item d-flex align-items-start gap-3">
+
+                <i class="bi {{ activity.icon }} fs-5 text-primary"></i>
+
+                <div class="flex-grow-1">
+                    <div>{{ activity.description }}</div>
+                    <small class="text-muted">{{ activity.timestamp|time:"H:i" }}</small>
+                </div>
+
+                {% if activity.url %}
+                <a href="{{ activity.url }}" class="btn btn-sm btn-outline-secondary">View</a>
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-info mb-0">No activity logged yet today. Go get something done!</div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

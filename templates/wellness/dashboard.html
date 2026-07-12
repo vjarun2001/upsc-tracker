@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+{% load wellness_extras %}
+
+{% block title %}
+Wellness
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-4">
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-header"><i class="bi bi-moon-stars"></i> Sleep</div>
+
+            <div class="card-body">
+
+                {% if sleep_log %}
+                <p class="mb-2">Logged today: <strong>{{ sleep_log.hours }}h</strong> ({{ sleep_log.get_quality_display }})</p>
+                {% endif %}
+
+                <form method="post" action="{% url 'wellness:log_sleep' %}">
+                    {% csrf_token %}
+                    {{ sleep_form|crispy }}
+                    <button class="btn btn-primary w-100">Log Sleep</button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-header"><i class="bi bi-droplet"></i> Water</div>
+
+            <div class="card-body">
+
+                {% if water_log %}
+                <p class="mb-2">Today: <strong>{{ water_log.glasses }} / {{ water_log.target }}</strong> glasses</p>
+                <div class="progress mb-3" style="height:8px;">
+                    <div class="progress-bar bg-info" style="width:{% widthratio water_log.glasses water_log.target 100 %}%;"></div>
+                </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'wellness:log_water' %}">
+                    {% csrf_token %}
+                    {{ water_form|crispy }}
+                    <button class="btn btn-primary w-100">Update</button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-header"><i class="bi bi-check2-circle"></i> Habits</div>
+
+            <div class="card-body">
+
+                {% for habit in habits %}
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+
+                    <span>
+                        {{ habit.name }}
+                        {% if habit.current_streak %}
+                        <span class="badge bg-warning text-dark">🔥 {{ habit.current_streak }}</span>
+                        {% endif %}
+                    </span>
+
+                    <form method="post" action="{% url 'wellness:toggle_habit' habit.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm {% if today_habit_logs|get_item:habit.pk %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                            {% if today_habit_logs|get_item:habit.pk %}Done{% else %}Mark{% endif %}
+                        </button>
+                    </form>
+
+                </div>
+
+                {% empty %}
+
+                <p class="text-muted">No habits yet.</p>
+
+                {% endfor %}
+
+                <form method="post" action="{% url 'wellness:add_habit' %}" class="d-flex gap-2 mt-3">
+                    {% csrf_token %}
+                    {{ habit_form.name }}
+                    <button class="btn btn-sm btn-outline-primary">Add</button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-header"><i class="bi bi-cup-hot"></i> Meals</div>
+
+            <div class="card-body">
+
+                {% for meal in meals %}
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+
+                    <span>
+                        {{ meal.label }}
+                        {% if meal.log.eaten %}
+                        <small class="text-muted">{{ meal.log.eaten_at|time:"H:i" }}</small>
+                        {% endif %}
+                    </span>
+
+                    <form method="post" action="{% url 'wellness:toggle_meal' meal.type %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm {% if meal.log.eaten %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                            {% if meal.log.eaten %}Eaten{% else %}Mark{% endif %}
+                        </button>
+                    </form>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

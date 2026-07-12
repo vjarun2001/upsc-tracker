@@ -1,0 +1,172 @@
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+
+    <div class="container">
+
+        <a class="navbar-brand fw-bold" href="/">
+            🎯 UPSC Tracker
+        </a>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbar">
+
+            <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse"
+             id="navbar">
+
+            <ul class="navbar-nav me-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+
+                {% if user.is_authenticated %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'planner:day_today' %}">Planner</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'study:dashboard' %}">Study</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'revision:today' %}">Revision</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notes:list' %}">Notes</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'goals:list' %}">Goals</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'routines:list' %}">Routines</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'wellness:dashboard' %}">Wellness</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'mocktest:list' %}">Mock Tests</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'activity:today' %}">Activity</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'analytics:dashboard' %}">Analytics</a>
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+            <ul class="navbar-nav align-items-lg-center">
+
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <span id="session-badge"
+                          class="nav-link text-muted"
+                          title="Time logged in today"
+                          data-seconds="{{ today_seconds }}"
+                          data-heartbeat-url="{% url 'accounts:heartbeat' %}">
+                        <i class="bi bi-clock-history"></i>
+                    </span>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <button id="theme-toggle" type="button" class="btn btn-link nav-link" title="Toggle dark mode">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                </li>
+
+                {% if user.is_authenticated %}
+
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bell"></i>
+                        {% if notifications_count %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ notifications_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end" style="min-width:280px;">
+                        {% for note in notifications %}
+                        <li><a class="dropdown-item" href="{{ note.url }}"><i class="bi {{ note.icon }}"></i> {{ note.message }}</a></li>
+                        {% empty %}
+                        <li><span class="dropdown-item-text text-muted">No new notifications</span></li>
+                        {% endfor %}
+                    </ul>
+
+                </li>
+
+                <li class="nav-item">
+
+                    <a class="nav-link"
+                       href="{% url 'accounts:profile' %}">
+
+                        <i class="bi bi-person-circle"></i>
+
+                        {{ user.full_name|default:user.email }}
+
+                    </a>
+
+                </li>
+
+                <li class="nav-item">
+
+                    <a class="btn btn-outline-danger ms-2"
+                       href="{% url 'account_logout' %}">
+
+                        Logout
+
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="nav-item">
+
+                    <a class="btn btn-outline-primary me-2"
+                       href="{% url 'account_login' %}">
+
+                        Login
+
+                    </a>
+
+                </li>
+
+                <li class="nav-item">
+
+                    <a class="btn btn-primary"
+                       href="{% url 'account_signup' %}">
+
+                        Register
+
+                    </a>
+
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</nav>

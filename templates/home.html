@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}
+UPSC Tracker
+{% endblock %}
+
+{% block content %}
+
+<div class="p-5 mb-5 bg-white rounded-4 shadow-sm">
+
+    <div class="row align-items-center">
+
+        <div class="col-lg-7">
+
+            <h1 class="display-4 fw-bold">
+
+                Master Your UPSC Journey
+
+            </h1>
+
+            <p class="lead mt-3">
+
+                Plan your preparation.
+
+                Track your study.
+
+                Analyze your progress.
+
+                Crack UPSC with confidence.
+
+            </p>
+
+            <a href="{% url 'account_signup' %}"
+               class="btn btn-primary btn-lg mt-3">
+
+                Get Started
+
+            </a>
+
+        </div>
+
+        <div class="col-lg-5 text-center">
+
+            <i class="bi bi-mortarboard-fill"
+               style="font-size:180px;color:#4F46E5;"></i>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <i class="bi bi-book fs-1 text-primary"></i>
+
+                <h5 class="mt-3">
+
+                    Study Planner
+
+                </h5>
+
+                <p>
+
+                    Organize every study session efficiently.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <i class="bi bi-calendar-week fs-1 text-success"></i>
+
+                <h5 class="mt-3">
+
+                    Daily Planner
+
+                </h5>
+
+                <p>
+
+                    Plan each day with discipline.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <i class="bi bi-graph-up-arrow fs-1 text-warning"></i>
+
+                <h5 class="mt-3">
+
+                    Analytics
+
+                </h5>
+
+                <p>
+
+                    Measure your preparation scientifically.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <i class="bi bi-bullseye fs-1 text-danger"></i>
+
+                <h5 class="mt-3">
+
+                    Goals
+
+                </h5>
+
+                <p>
+
+                    Stay focused on long-term success.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
