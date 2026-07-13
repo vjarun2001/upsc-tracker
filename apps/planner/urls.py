@@ -11,6 +11,11 @@ urlpatterns = [
         name="day_today",
     ),
     path(
+        "tasks/",
+        views.board,
+        name="board",
+    ),
+    path(
         "<int:year>/<int:month>/<int:day>/",
         views.day_view,
         name="day",
@@ -24,6 +29,11 @@ urlpatterns = [
         "task/<int:pk>/toggle/",
         views.toggle_task,
         name="toggle_task",
+    ),
+    path(
+        "task/<int:pk>/edit/",
+        views.edit_task,
+        name="edit_task",
     ),
     path(
         "task/<int:pk>/delete/",

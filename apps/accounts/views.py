@@ -6,6 +6,9 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.core.models import ExamProfile
+
+from .forms import ExamProfileForm
 from .forms import ProfileForm
 from .forms import UserForm
 from .models import LoginSession
@@ -14,6 +17,8 @@ from .services import today_seconds
 
 @login_required
 def profile(request):
+
+    exam_profile, _ = ExamProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
 
@@ -28,10 +33,16 @@ def profile(request):
             instance=request.user.profile,
         )
 
-        if user_form.is_valid() and profile_form.is_valid():
+        exam_form = ExamProfileForm(
+            request.POST,
+            instance=exam_profile,
+        )
+
+        if user_form.is_valid() and profile_form.is_valid() and exam_form.is_valid():
 
             user_form.save()
             profile_form.save()
+            exam_form.save()
 
             messages.success(
                 request,
@@ -46,12 +57,15 @@ def profile(request):
 
         profile_form = ProfileForm(instance=request.user.profile)
 
+        exam_form = ExamProfileForm(instance=exam_profile)
+
     return render(
         request,
         "account/profile.html",
         {
             "user_form": user_form,
             "profile_form": profile_form,
+            "exam_form": exam_form,
         },
     )
 

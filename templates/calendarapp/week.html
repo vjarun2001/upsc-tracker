@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}
+Calendar
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Calendar Planner</h3>
+        <p class="text-muted mb-0">Visualize your preparation schedule</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'planner:board' %}">
+        <i class="bi bi-plus-lg"></i> Add UPSC Task
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'calendarapp:week' prev_week.year prev_week.month prev_week.day %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
+            <a href="{% url 'calendarapp:week' next_week.year next_week.month next_week.day %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+            <strong class="ms-2">{{ week_start|date:"d M" }} – {{ week_end|date:"d M Y" }}</strong>
+        </div>
+
+        <div class="btn-group">
+            <a href="{% url 'calendarapp:day_today' %}" class="btn btn-sm btn-outline-secondary">Day</a>
+            <span class="btn btn-sm btn-primary">Week</span>
+            <a href="{% url 'calendarapp:month_today' %}" class="btn btn-sm btn-outline-secondary">Month</a>
+        </div>
+
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for day in week_days %}
+    <div class="col">
+        <div class="card h-100 {% if day.date == today %}border-primary{% endif %}">
+            <div class="card-body p-2">
+                <div class="text-center mb-2">
+                    <div class="small text-muted">{{ day.date|date:"D" }}</div>
+                    <div class="fw-bold {% if day.date == today %}text-primary{% endif %}">{{ day.date|date:"d" }}</div>
+                </div>
+                <a href="{% url 'calendarapp:day' day.date.year day.date.month day.date.day %}" class="d-block text-decoration-none">
+                    {% for event in day.events|slice:":4" %}
+                    <div class="small rounded px-1 py-1 mb-1 text-truncate" style="background:{{ event.color }}22; border-left:3px solid {{ event.color }}; color:inherit;">
+                        {{ event.title }}
+                    </div>
+                    {% endfor %}
+                    {% if day.events|length > 4 %}
+                    <div class="small text-muted">+{{ day.events|length|add:"-4" }} more</div>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

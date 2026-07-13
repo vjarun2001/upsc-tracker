@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
@@ -14,7 +15,10 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet
 
 from apps.mocktest.models import MockTest
+from apps.planner.models import DailyTask
+from apps.revision.models import RevisionSchedule
 from apps.study.models import StudySession, Subject, Topic
+from apps.tracker.models import Tracker, TrackerLog
 
 from . import services
 
@@ -25,22 +29,40 @@ def _analytics_context(user):
     mock_labels, mock_marks, mock_accuracy = services.mock_test_trend(user)
     topic_labels, topic_percentages = services.topic_completion_per_subject(user)
     routine_labels, routine_minutes = services.routine_minutes_today(user)
+    week_labels, week_hours = services.weekly_study_hours(user)
+    trend_labels, trend_done, trend_pending = services.task_trend(user)
+    revision_labels, revision_done, revision_overdue = services.revision_activity(user)
+    confidence_counts = services.confidence_split(user)
+
+    total_topics = Topic.objects.filter(subject__user=user).count()
+    completed_topics = Topic.objects.filter(subject__user=user, status=Topic.Status.COMPLETED).count()
 
     return {
         "streak": services.compute_current_streak(user),
         "total_subjects": Subject.objects.filter(user=user).count(),
-        "total_topics": Topic.objects.filter(subject__user=user).count(),
-        "completed_topics": Topic.objects.filter(subject__user=user, is_completed=True).count(),
+        "total_topics": total_topics,
+        "completed_topics": completed_topics,
+        "syllabus_percent": round(completed_topics / total_topics * 100) if total_topics else 0,
         "total_minutes": sum(
             s.duration_minutes for s in StudySession.objects.filter(user=user)
         ),
         "total_mock_tests": MockTest.objects.filter(user=user).count(),
+        "revision_percent": services.revision_completion_summary(user),
+        "syllabus_rows": services.syllabus_progress_by_subject(user),
         "recap": services.build_daily_recap(user),
         "chart_data": {
             "subject_labels": subject_labels,
             "subject_minutes": subject_minutes,
             "daily_labels": daily_labels,
             "daily_minutes": daily_minutes,
+            "week_labels": week_labels,
+            "week_hours": week_hours,
+            "trend_labels": trend_labels,
+            "trend_done": trend_done,
+            "trend_pending": trend_pending,
+            "revision_labels": revision_labels,
+            "revision_done": revision_done,
+            "revision_overdue": revision_overdue,
             "mock_labels": mock_labels,
             "mock_marks": mock_marks,
             "mock_accuracy": mock_accuracy,
@@ -48,13 +70,62 @@ def _analytics_context(user):
             "topic_percentages": topic_percentages,
             "routine_labels": routine_labels,
             "routine_minutes": routine_minutes,
+            "confidence_counts": [
+                confidence_counts["not_set"],
+                confidence_counts["low"],
+                confidence_counts["medium"],
+                confidence_counts["high"],
+            ],
         },
     }
 
 
 @login_required
 def dashboard(request):
-    return render(request, "analytics/dashboard.html", _analytics_context(request.user))
+    today = timezone.localdate()
+
+    context = _analytics_context(request.user)
+
+    today_tasks = DailyTask.objects.filter(user=request.user, date=today).select_related("subject")
+    tasks_done_today = today_tasks.filter(is_completed=True).count()
+    tasks_total_today = today_tasks.count()
+
+    due_revisions = RevisionSchedule.objects.filter(
+        user=request.user, is_done=False, scheduled_date__lte=today
+    ).select_related("topic", "topic__subject")
+
+    habits = Tracker.objects.filter(
+        user=request.user, is_active=True, kind=Tracker.Kind.BOOLEAN, category=Tracker.Category.CUSTOM
+    )
+    today_logs_by_tracker = {
+        log.tracker_id: log
+        for log in TrackerLog.objects.filter(tracker__user=request.user, date=today)
+    }
+    today_habit_logs = {
+        tracker_id: bool(log.value) for tracker_id, log in today_logs_by_tracker.items()
+    }
+
+    health_trackers = Tracker.objects.filter(
+        user=request.user, is_active=True, category=Tracker.Category.HEALTH
+    )
+    health_rows = [
+        {"tracker": tracker, "today_log": today_logs_by_tracker.get(tracker.pk)}
+        for tracker in health_trackers
+    ]
+
+    context.update(
+        {
+            "today_tasks": today_tasks,
+            "tasks_done_today": tasks_done_today,
+            "tasks_total_today": tasks_total_today,
+            "due_revisions": due_revisions,
+            "habits": habits,
+            "today_habit_logs": today_habit_logs,
+            "health_rows": health_rows,
+        }
+    )
+
+    return render(request, "analytics/dashboard.html", context)
 
 
 @login_required

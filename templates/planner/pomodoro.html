@@ -3,16 +3,67 @@
 {% load static %}
 
 {% block title %}
-Pomodoro Timer
+Timer
 {% endblock %}
 
 {% block content %}
 
-<div class="row justify-content-center">
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Timer</h3>
+        <p class="text-muted mb-0">Focus with the Pomodoro technique</p>
+    </div>
+</div>
 
-    <div class="col-lg-6">
+<div class="row g-3 mb-4">
 
-        <div class="card shadow-sm mb-4">
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-red"><i class="bi bi-clock"></i></div>
+            <div class="stat-value">{{ stats.focus_time_minutes }}m</div>
+            <div class="stat-label">Focus Time · 7d</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-lightning-charge"></i></div>
+            <div class="stat-value">{{ stats.sessions_completed }}</div>
+            <div class="stat-label">Sessions</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-cup-hot"></i></div>
+            <div class="stat-value">{{ stats.break_time_minutes }}m</div>
+            <div class="stat-label">Break Time</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-purple"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-value">{{ stats.avg_focus_minutes }}m</div>
+            <div class="stat-label">Avg Focus/Day</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-fire"></i></div>
+            <div class="stat-value">{{ stats.streak }}d</div>
+            <div class="stat-label">Streak</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+
+        <div class="card shadow-sm">
 
             <div class="card-body text-center p-4">
 
@@ -61,6 +112,30 @@ Pomodoro Timer
                 </div>
 
             </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-5">
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Today's Tasks</strong>
+                <a href="{% url 'planner:board' %}" class="small">All &rarr;</a>
+            </div>
+
+            <ul class="list-group list-group-flush">
+                {% for task in today_tasks %}
+                <li class="list-group-item {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">
+                    <i class="bi {% if task.is_completed %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %}"></i>
+                    {{ task.title }}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No tasks planned for today.</li>
+                {% endfor %}
+            </ul>
 
         </div>
 

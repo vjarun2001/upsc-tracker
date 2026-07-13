@@ -1,0 +1,64 @@
+{% load crispy_forms_tags %}
+{% load tracker_extras %}
+
+<div class="task-card priority-{{ task.priority }} {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}" data-task-row>
+
+    <div class="d-flex justify-content-between align-items-start gap-2">
+
+        <div class="form-check flex-grow-1">
+            <input class="form-check-input task-toggle" type="checkbox"
+                   {% if task.is_completed %}checked{% endif %}
+                   data-url="{% url 'planner:toggle_task' task.pk %}">
+            <label class="form-check-label fw-semibold">{{ task.title }}</label>
+        </div>
+
+        <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="modal" data-bs-target="#editTaskModal{{ task.pk }}">
+                <i class="bi bi-pencil"></i>
+            </button>
+
+            <button class="btn btn-sm btn-link text-danger p-0 task-delete" data-url="{% url 'planner:delete_task' task.pk %}">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-1 mt-2">
+
+        {% if task.subject %}
+        <span class="badge rounded-pill" style="background:{{ task.subject.color }};">{{ task.subject.name }}</span>
+        {% endif %}
+
+        <span class="badge bg-light text-dark border text-capitalize">{{ task.priority }}</span>
+
+        {% if task.start_time %}
+        <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i> {{ task.start_time|time:"H:i" }}</span>
+        {% endif %}
+
+        <span class="badge bg-light text-dark border">{{ task.date|date:"d M" }}</span>
+
+    </div>
+
+</div>
+
+<div class="modal fade" id="editTaskModal{{ task.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'planner:edit_task' task.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="modal-body">
+                    {{ task_edit_forms|get_item:task.pk|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

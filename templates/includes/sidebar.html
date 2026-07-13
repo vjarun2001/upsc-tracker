@@ -1,0 +1,76 @@
+{% load static %}
+
+{% if user.is_authenticated %}
+
+<aside class="app-sidebar" id="appSidebar">
+
+    <a href="{% url 'core:home' %}" class="sidebar-brand">
+        <span class="sidebar-logo"><i class="bi bi-bullseye"></i></span>
+        <span class="sidebar-wordmark">UPSC Tracker</span>
+    </a>
+
+    <div class="sidebar-toggle-row">
+        <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Toggle sidebar">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'analytics' %}active{% endif %}" href="{% url 'analytics:dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i><span class="sidebar-label">Dashboard</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'planner' and 'pomodoro' not in request.path %}active{% endif %}" href="{% url 'planner:board' %}">
+            <i class="bi bi-clipboard-check"></i><span class="sidebar-label">Tasks</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'calendarapp' %}active{% endif %}" href="{% url 'calendarapp:day_today' %}">
+            <i class="bi bi-calendar3"></i><span class="sidebar-label">Calendar</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'study' %}active{% endif %}" href="{% url 'study:dashboard' %}">
+            <i class="bi bi-journal-bookmark"></i><span class="sidebar-label">Syllabus</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'revision' %}active{% endif %}" href="{% url 'revision:today' %}">
+            <i class="bi bi-arrow-repeat"></i><span class="sidebar-label">Revision</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'mocktest' %}active{% endif %}" href="{% url 'mocktest:list' %}">
+            <i class="bi bi-bar-chart-line"></i><span class="sidebar-label">Test Analytics</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'planner' and 'pomodoro' in request.path %}active{% endif %}" href="{% url 'planner:pomodoro' %}">
+            <i class="bi bi-stopwatch"></i><span class="sidebar-label">Timer</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'tracker' %}active{% endif %}" href="{% url 'tracker:dashboard' %}">
+            <i class="bi bi-check2-circle"></i><span class="sidebar-label">Tracker</span>
+        </a>
+
+        <div class="sidebar-section-title">More</div>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'notes' %}active{% endif %}" href="{% url 'notes:list' %}">
+            <i class="bi bi-journal-text"></i><span class="sidebar-label">Notes</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'goals' %}active{% endif %}" href="{% url 'goals:list' %}">
+            <i class="bi bi-flag"></i><span class="sidebar-label">Goals</span>
+        </a>
+
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'activity' %}active{% endif %}" href="{% url 'activity:today' %}">
+            <i class="bi bi-lightning-charge"></i><span class="sidebar-label">Activity</span>
+        </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="sidebar-nav-item" href="{% url 'accounts:profile' %}">
+            <i class="bi bi-gear"></i><span class="sidebar-label">Settings</span>
+        </a>
+    </div>
+
+</aside>
+
+{% endif %}

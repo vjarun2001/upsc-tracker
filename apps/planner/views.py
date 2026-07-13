@@ -8,13 +8,14 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from apps.activity.services import log_activity
 from apps.study.models import Subject
 
 from .forms import DailyTaskForm, PomodoroSessionLogForm
 from .models import DailyTask, PomodoroSession
+from .services import mark_task_completed
 
 
 def _resolve_date(year, month, day):
@@ -55,6 +56,40 @@ def day_view(request, year=None, month=None, day=None):
 
 
 @login_required
+def board(request):
+    today = timezone.localdate()
+
+    tasks = DailyTask.objects.filter(user=request.user).select_related("subject")
+
+    today_tasks = tasks.filter(date=today)
+    scheduled_tasks = tasks.filter(date__gt=today)
+    pending_tasks = tasks.filter(date__lt=today, is_completed=False)
+    completed_count = tasks.filter(is_completed=True).count()
+
+    task_edit_forms = {
+        task.pk: DailyTaskForm(instance=task, user=request.user)
+        for task in list(today_tasks) + list(scheduled_tasks) + list(pending_tasks)
+    }
+
+    return render(
+        request,
+        "planner/board.html",
+        {
+            "today_tasks": today_tasks,
+            "scheduled_tasks": scheduled_tasks,
+            "pending_tasks": pending_tasks,
+            "today_count": today_tasks.count(),
+            "scheduled_count": scheduled_tasks.count(),
+            "pending_count": pending_tasks.count(),
+            "completed_count": completed_count,
+            "form": DailyTaskForm(user=request.user),
+            "task_edit_forms": task_edit_forms,
+            "today": today,
+        },
+    )
+
+
+@login_required
 def add_task(request):
     if request.method == "POST":
 
@@ -82,9 +117,23 @@ def add_task(request):
 
             task.order = next_order
 
+            action = request.POST.get("action", "schedule")
+            if action == "log":
+                task.is_completed = True
+
             task.save()
 
-            messages.success(request, "Task added successfully.")
+            if action == "log":
+                mark_task_completed(task)
+                messages.success(request, "Logged for the day.")
+            else:
+                messages.success(request, "Scheduled successfully.")
+
+            next_url = request.POST.get("next")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}
+            ):
+                return redirect(next_url)
 
             return redirect(
                 "planner:day",
@@ -107,19 +156,35 @@ def add_task(request):
 def toggle_task(request, pk):
     task = get_object_or_404(DailyTask, pk=pk, user=request.user)
 
-    task.is_completed = not task.is_completed
-    task.save(update_fields=["is_completed"])
-
     if task.is_completed:
-        log_activity(
-            request.user,
-            "task_completed",
-            f"Completed task: {task.title}",
-            url="/planner/",
-            icon="bi-check-square",
-        )
+        task.is_completed = False
+        task.save(update_fields=["is_completed"])
+    else:
+        mark_task_completed(task)
 
     return JsonResponse({"ok": True, "id": task.pk, "is_completed": task.is_completed})
+
+
+@login_required
+def edit_task(request, pk):
+    task = get_object_or_404(DailyTask, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = DailyTaskForm(request.POST, instance=task, user=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Task updated.")
+
+            next_url = request.POST.get("next")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}
+            ):
+                return redirect(next_url)
+
+        return redirect("planner:board")
+
+    return redirect("planner:board")
 
 
 @require_POST
@@ -152,6 +217,13 @@ def pomodoro(request):
         "preselected_subject": preselected_subject,
     }
 
+    from apps.analytics.services import compute_current_streak
+
+    from . import services
+
+    stats = services.timer_stats(request.user)
+    stats["streak"] = compute_current_streak(request.user)
+
     return render(
         request,
         "planner/pomodoro.html",
@@ -160,6 +232,7 @@ def pomodoro(request):
             "subjects": subjects,
             "recent_sessions": recent_sessions,
             "client_config": client_config,
+            "stats": stats,
         },
     )
 

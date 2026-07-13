@@ -1,158 +1,190 @@
 {% extends "base.html" %}
 
 {% load crispy_forms_tags %}
+{% load tracker_extras %}
 
 {% block title %}
-Study Dashboard
+Syllabus
 {% endblock %}
 
 {% block content %}
 
-<div class="row mb-4">
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Syllabus</h3>
+        <p class="text-muted mb-0">Track your syllabus coverage and revision confidence</p>
+    </div>
+</div>
 
-    <div class="col-md-3">
+<div class="row g-3 mb-4">
 
-        <div class="card shadow-sm">
-
-            <div class="card-body text-center">
-
-                <h2>{{ total_subjects }}</h2>
-
-                <p>Subjects</p>
-
-            </div>
-
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-blue"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="stat-value">{{ total_subjects }}</div>
+            <div class="stat-label">Subjects</div>
         </div>
-
     </div>
 
-    <div class="col-md-3">
-
-        <div class="card shadow-sm">
-
-            <div class="card-body text-center">
-
-                <h2>{{ total_topics }}</h2>
-
-                <p>Topics</p>
-
-            </div>
-
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-check2-circle"></i></div>
+            <div class="stat-value">{{ completed_topics }}/{{ total_topics }}</div>
+            <div class="stat-label">Topics Done</div>
         </div>
-
     </div>
 
-    <div class="col-md-3">
-
-        <div class="card shadow-sm">
-
-            <div class="card-body text-center">
-
-                <h2>{{ completed_topics }}</h2>
-
-                <p>Completed</p>
-
-            </div>
-
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-value">{{ total_sessions }}</div>
+            <div class="stat-label">Sessions</div>
         </div>
-
     </div>
 
-    <div class="col-md-3">
-
-        <div class="card shadow-sm">
-
-            <div class="card-body text-center">
-
-                <h2>{{ total_minutes }}</h2>
-
-                <p>Minutes Studied</p>
-
-            </div>
-
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-purple"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value">{{ total_minutes }}</div>
+            <div class="stat-label">Minutes Studied</div>
         </div>
-
     </div>
 
 </div>
 
-<div class="row">
+<div class="row g-4">
+
+    <div class="col-lg-4">
+
+        <div class="card mb-3">
+
+            <div class="card-header"><strong>Syllabus Navigator</strong></div>
+
+            <div class="card-body p-0">
+
+                {% if subjects %}
+                <div class="list-group list-group-flush">
+                    {% for subject in subjects %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center {% if selected_subject.pk == subject.pk %}active{% endif %}">
+                        <a href="?subject={{ subject.pk }}" class="flex-grow-1 text-decoration-none {% if selected_subject.pk == subject.pk %}text-white{% else %}text-body{% endif %}">
+                            <span class="badge rounded-pill me-2" style="background:{{ subject.color }};">&nbsp;</span>
+                            {{ subject.name }}
+                            {% if subject.phase %}<span class="badge bg-light text-dark border text-capitalize">{{ subject.phase }}</span>{% endif %}
+                            <span class="badge bg-secondary ms-1">{{ subject.topics.count }}</span>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-link p-0 ms-2 {% if selected_subject.pk == subject.pk %}text-white{% endif %}"
+                                data-bs-toggle="modal" data-bs-target="#editSubjectModal{{ subject.pk }}" title="Edit subject">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info m-3 mb-0">No subjects yet. Add one below.</div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><strong>Add Subject</strong></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'study:add_subject' %}">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button class="btn btn-primary w-100">Add Subject</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><strong>Add Topic</strong></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'study:add_topic' %}">
+                    {% csrf_token %}
+                    {{ topic_form|crispy }}
+                    <button class="btn btn-primary w-100">Add Topic</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
 
     <div class="col-lg-8">
 
-        <div class="card shadow-sm">
+        <div class="card">
 
             <div class="card-header">
-
-                <strong>My Subjects</strong>
-
+                <strong>
+                    Tracker Workbench{% if selected_subject %}: {{ selected_subject.name }}{% endif %}
+                </strong>
+                <div class="text-muted small">Track revision progress with spaced repetition</div>
             </div>
 
             <div class="card-body">
 
-                {% if subjects %}
+                {% if selected_subject and topic_rows %}
 
-                    <div class="accordion" id="subjectsAccordion">
-
-                        {% for subject in subjects %}
-
-                        <div class="accordion-item">
-
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#subject-{{ subject.pk }}">
-
-                                    <span class="badge rounded-pill me-2" style="background:{{ subject.color }};">&nbsp;</span>
-
-                                    {{ subject.name }}
-
-                                    <span class="badge bg-secondary ms-2">{{ subject.topics.count }} Topics</span>
-
-                                </button>
-                            </h2>
-
-                            <div id="subject-{{ subject.pk }}" class="accordion-collapse collapse" data-bs-parent="#subjectsAccordion">
-
-                                <div class="accordion-body">
-
-                                    {% if subject.topics.all %}
-                                    <ul class="list-group list-group-flush">
-                                        {% for topic in subject.topics.all %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span class="{% if topic.is_completed %}text-decoration-line-through text-muted{% endif %}">
-                                                {{ topic.title }}
-                                            </span>
-                                            <form method="post" action="{% url 'study:toggle_topic' topic.pk %}">
-                                                {% csrf_token %}
-                                                <button class="btn btn-sm btn-outline-success">
-                                                    {% if topic.is_completed %}Undo{% else %}Mark Done{% endif %}
-                                                </button>
-                                            </form>
-                                        </li>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr class="small text-muted text-uppercase">
+                                <th>Topic</th>
+                                <th>Status</th>
+                                <th>Confidence</th>
+                                <th>Weightage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for topic, depth in topic_rows %}
+                            <tr>
+                                <td style="padding-left:{{ depth|add:1 }}rem;">
+                                    {% if depth == 0 %}<i class="bi bi-diamond-fill text-primary small me-1"></i>{% endif %}
+                                    {{ topic.title }}
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'study:update_topic' topic.pk %}">
+                                        {% csrf_token %}
+                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:130px;">
+                                            {% for value, label in topic_statuses %}
+                                            <option value="{{ value }}" {% if topic.status == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'study:update_topic' topic.pk %}" class="d-flex gap-1">
+                                        {% csrf_token %}
+                                        {% for value, label in topic_confidences %}
+                                        <button type="submit" name="confidence" value="{{ value }}"
+                                                class="btn btn-sm {% if topic.confidence == value %}btn-{% if value == 'low' %}danger{% elif value == 'medium' %}warning{% else %}success{% endif %}{% else %}btn-outline-secondary{% endif %}">
+                                            {% if value == "low" %}<i class="bi bi-emoji-frown"></i>{% elif value == "medium" %}<i class="bi bi-emoji-neutral"></i>{% else %}<i class="bi bi-emoji-smile"></i>{% endif %}
+                                        </button>
                                         {% endfor %}
-                                    </ul>
-                                    {% else %}
-                                    <p class="text-muted mb-0">No topics yet under this subject.</p>
-                                    {% endif %}
+                                    </form>
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'study:update_topic' topic.pk %}">
+                                        {% csrf_token %}
+                                        <input type="number" name="weightage" value="{{ topic.weightage }}" min="1"
+                                               class="form-control form-control-sm" style="width:70px;"
+                                               onchange="this.form.submit()">
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-                                </div>
+                {% elif selected_subject %}
 
-                            </div>
-
-                        </div>
-
-                        {% endfor %}
-
-                    </div>
+                <div class="alert alert-info mb-0">No topics yet under {{ selected_subject.name }}. Add one on the left.</div>
 
                 {% else %}
 
-                    <div class="alert alert-info">
-
-                        No subjects created yet.
-
-                    </div>
+                <div class="alert alert-info mb-0">Select or create a subject to see its topics here.</div>
 
                 {% endif %}
 
@@ -162,68 +194,28 @@ Study Dashboard
 
     </div>
 
-    <div class="col-lg-4">
-
-        <div class="card shadow-sm">
-
-            <div class="card-header">
-
-                <strong>Add Subject</strong>
-
-            </div>
-
-            <div class="card-body">
-
-                <form method="post"
-                      action="{% url 'study:add_subject' %}">
-
-                    {% csrf_token %}
-
-                    {{ form|crispy }}
-
-                    <button class="btn btn-primary w-100">
-
-                        Add Subject
-
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-        <div class="card shadow-sm mt-3">
-
-            <div class="card-header">
-
-                <strong>Add Topic</strong>
-
-            </div>
-
-            <div class="card-body">
-
-                <form method="post"
-                      action="{% url 'study:add_topic' %}">
-
-                    {% csrf_token %}
-
-                    {{ topic_form|crispy }}
-
-                    <button class="btn btn-primary w-100">
-
-                        Add Topic
-
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-
 </div>
+
+{% for subject in subjects %}
+<div class="modal fade" id="editSubjectModal{{ subject.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit {{ subject.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'study:edit_subject' subject.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ subject_edit_forms|get_item:subject.pk|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 {% endblock %}

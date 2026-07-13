@@ -76,6 +76,125 @@ def daily_minutes_last_n_days(user, n=14):
     return labels, values
 
 
+def weekly_study_hours(user):
+    from apps.study.models import StudySession
+
+    today = timezone.localdate()
+    monday = today - timedelta(days=today.weekday())
+    days = [monday + timedelta(days=i) for i in range(7)]
+
+    sessions = StudySession.objects.filter(user=user, start_time__date__gte=monday)
+
+    totals = {day: 0 for day in days}
+    for session in sessions:
+        day = session.start_time.date() if hasattr(session.start_time, "date") else session.start_time
+        if day in totals:
+            totals[day] += session.duration_minutes
+
+    labels = [day.strftime("%a") for day in days]
+    hours = [round(totals[day] / 60, 1) for day in days]
+
+    return labels, hours
+
+
+def task_trend(user, n=14):
+    from apps.planner.models import DailyTask
+
+    today = timezone.localdate()
+    days = [today - timedelta(days=i) for i in range(n - 1, -1, -1)]
+
+    tasks = DailyTask.objects.filter(user=user, date__gte=days[0], date__lte=today)
+
+    done_by_day = {day: 0 for day in days}
+    pending_by_day = {day: 0 for day in days}
+
+    for task in tasks:
+        if task.date in done_by_day:
+            if task.is_completed:
+                done_by_day[task.date] += 1
+            else:
+                pending_by_day[task.date] += 1
+
+    labels = [day.strftime("%d %b") for day in days]
+
+    return labels, [done_by_day[d] for d in days], [pending_by_day[d] for d in days]
+
+
+def revision_activity(user, n=14):
+    from apps.revision.models import RevisionSchedule
+
+    today = timezone.localdate()
+    days = [today - timedelta(days=i) for i in range(n - 1, -1, -1)]
+
+    entries = RevisionSchedule.objects.filter(
+        user=user, scheduled_date__gte=days[0], scheduled_date__lte=today
+    )
+
+    revised_by_day = {day: 0 for day in days}
+    overdue_by_day = {day: 0 for day in days}
+
+    for entry in entries:
+        if entry.scheduled_date not in revised_by_day:
+            continue
+        if entry.is_done:
+            revised_by_day[entry.scheduled_date] += 1
+        elif entry.scheduled_date < today:
+            overdue_by_day[entry.scheduled_date] += 1
+
+    labels = [day.strftime("%d %b") for day in days]
+
+    return labels, [revised_by_day[d] for d in days], [overdue_by_day[d] for d in days]
+
+
+def revision_completion_summary(user):
+    from apps.revision.models import RevisionSchedule
+
+    total = RevisionSchedule.objects.filter(user=user).count()
+
+    if not total:
+        return 0
+
+    done = RevisionSchedule.objects.filter(user=user, is_done=True).count()
+
+    return round(done / total * 100)
+
+
+def confidence_split(user):
+    from apps.study.models import Topic
+
+    topics = Topic.objects.filter(subject__user=user)
+
+    counts = {"not_set": 0, "low": 0, "medium": 0, "high": 0}
+    for topic in topics:
+        key = topic.confidence or "not_set"
+        counts[key] = counts.get(key, 0) + 1
+
+    return counts
+
+
+def syllabus_progress_by_subject(user):
+    from apps.study.models import Subject, Topic
+
+    subjects = Subject.objects.filter(user=user).prefetch_related("topics")
+
+    rows = []
+    for subject in subjects:
+        total = subject.topics.count()
+        if not total:
+            continue
+        done = subject.topics.filter(status=Topic.Status.COMPLETED).count()
+        rows.append(
+            {
+                "name": subject.name,
+                "color": subject.color,
+                "completed_percent": round(done / total * 100),
+                "not_started_percent": 100 - round(done / total * 100),
+            }
+        )
+
+    return rows
+
+
 def mock_test_trend(user):
     from apps.mocktest.models import MockTest
 
@@ -89,18 +208,20 @@ def mock_test_trend(user):
 
 
 def routine_minutes_today(user):
-    from apps.routines.models import Routine
+    from apps.tracker.models import Tracker
 
     today = timezone.localdate()
-    routines = Routine.objects.filter(user=user, is_active=True)
+    trackers = Tracker.objects.filter(
+        user=user, is_active=True, kind=Tracker.Kind.DURATION
+    )
 
     labels = []
     values = []
 
-    for routine in routines:
-        log = routine.logs.filter(date=today).first()
-        labels.append(routine.name)
-        values.append(log.minutes_spent if log else 0)
+    for tracker in trackers:
+        log = tracker.logs.filter(date=today).first()
+        labels.append(tracker.name)
+        values.append(log.value if log else 0)
 
     return labels, values
 
@@ -110,8 +231,7 @@ def build_daily_recap(user):
     from apps.activity.services import get_today_activity
     from apps.mocktest.models import MockTest
     from apps.planner.models import DailyTask, PomodoroSession
-    from apps.routines.models import Routine, RoutineLog
-    from apps.wellness.models import Habit, HabitLog, MealLog, SleepLog
+    from apps.tracker.models import Tracker, TrackerLog
 
     today = timezone.localdate()
 
@@ -143,21 +263,24 @@ def build_daily_recap(user):
     topics_done_today = verb_counts.get("topic_completed", 0)
     goals_done_today = verb_counts.get("goal_completed", 0)
 
-    routines_total = Routine.objects.filter(user=user, is_active=True).count()
-    routines_logged = RoutineLog.objects.filter(
-        routine__user=user, routine__is_active=True, date=today
+    trackers_total = Tracker.objects.filter(user=user, is_active=True).count()
+    trackers_logged = TrackerLog.objects.filter(
+        tracker__user=user, tracker__is_active=True, date=today, value__gt=0
     ).count()
 
-    habits_total = Habit.objects.filter(user=user, is_active=True).count()
-    habits_done = HabitLog.objects.filter(
-        habit__user=user, date=today, is_done=True
+    meals_logged = TrackerLog.objects.filter(
+        tracker__user=user,
+        tracker__kind=Tracker.Kind.BOOLEAN,
+        tracker__name__in=["Breakfast", "Lunch", "Dinner"],
+        date=today,
+        value__gt=0,
     ).count()
-
-    meals_logged = MealLog.objects.filter(user=user, date=today, eaten=True).count()
 
     mock_test_today = MockTest.objects.filter(user=user, test_date=today).exists()
 
-    sleep_log = SleepLog.objects.filter(user=user, date=today).first()
+    sleep_log = TrackerLog.objects.filter(
+        tracker__user=user, tracker__name__iexact="sleep", date=today
+    ).select_related("tracker").first()
 
     streak = compute_current_streak(user)
     logged_in_minutes = round(accounts_today_seconds(user) / 60)
@@ -172,14 +295,12 @@ def build_daily_recap(user):
         highlights.append(f"Completed {topics_done_today} topic(s)")
     if goals_done_today:
         highlights.append(f"Completed {goals_done_today} goal(s)")
-    if routines_total:
-        highlights.append(f"Logged {routines_logged}/{routines_total} routines")
-    if habits_total:
-        highlights.append(f"Completed {habits_done}/{habits_total} habits")
+    if trackers_total:
+        highlights.append(f"Logged {trackers_logged}/{trackers_total} trackers")
     if meals_logged:
         highlights.append(f"Logged {meals_logged}/3 meals")
     if sleep_log:
-        highlights.append(f"Slept {sleep_log.hours}h last night")
+        highlights.append(f"Slept {round(sleep_log.value / 60, 1)}h last night")
     if mock_test_today:
         highlights.append("Took a mock test today")
     if logged_in_minutes:
@@ -210,7 +331,7 @@ def build_daily_recap(user):
 
 
 def topic_completion_per_subject(user):
-    from apps.study.models import Subject
+    from apps.study.models import Subject, Topic
 
     subjects = Subject.objects.filter(user=user).prefetch_related("topics")
 
@@ -221,7 +342,7 @@ def topic_completion_per_subject(user):
         total = subject.topics.count()
         if not total:
             continue
-        done = subject.topics.filter(is_completed=True).count()
+        done = subject.topics.filter(status=Topic.Status.COMPLETED).count()
         labels.append(subject.name)
         percentages.append(round(done / total * 100, 1))
 

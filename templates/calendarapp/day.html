@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+Calendar
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Calendar</h3>
+        <p class="text-muted mb-0">Click any time slot to log or schedule a task or habit</p>
+    </div>
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#calendarAddModal">
+        <i class="bi bi-plus-lg"></i> Add Entry
+    </button>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'calendarapp:day' prev_date.year prev_date.month prev_date.day %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
+            <a href="{% url 'calendarapp:day' next_date.year next_date.month next_date.day %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+            <strong class="ms-2">{{ view_date|date:"l, d M Y" }}</strong>
+            {% if view_date == today %}<span class="badge bg-primary">Today</span>{% endif %}
+        </div>
+
+        <div class="btn-group">
+            <span class="btn btn-sm btn-primary">Day</span>
+            <a href="{% url 'calendarapp:week_today' %}" class="btn btn-sm btn-outline-secondary">Week</a>
+            <a href="{% url 'calendarapp:month_today' %}" class="btn btn-sm btn-outline-secondary">Month</a>
+        </div>
+
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+        {% if all_day_events %}
+        <div class="mb-3 pb-3 border-bottom">
+            <div class="text-uppercase small text-muted fw-bold mb-2">All Day</div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for event in all_day_events %}
+                <span class="badge rounded-pill px-3 py-2" style="background:{{ event.color }}22; color:{{ event.color }}; border:1px solid {{ event.color }}55;">
+                    {{ event.title }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="max-height:600px; overflow-y:auto;">
+            {% for slot in hours %}
+            <div class="d-flex border-bottom py-2 calendar-slot" data-hour="{{ slot.hour }}" style="cursor:pointer;" title="Click to log or schedule at this time">
+                <div class="text-muted small" style="width:70px; flex-shrink:0;">
+                    {% if slot.hour == 0 %}12 AM{% elif slot.hour < 12 %}{{ slot.hour }} AM{% elif slot.hour == 12 %}12 PM{% else %}{{ slot.hour|add:"-12" }} PM{% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    {% for event in slot.events %}
+                    <div class="rounded px-2 py-1 mb-1 small {% if event.is_completed %}text-decoration-line-through text-muted{% endif %}"
+                         style="background:{{ event.color }}22; border-left:3px solid {{ event.color }};">
+                        {{ event.title }}
+                        {% if event.start_time %}<span class="text-muted">{{ event.start_time|time:"H:i" }}{% if event.end_time %}–{{ event.end_time|time:"H:i" }}{% endif %}</span>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="calendarAddModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Entry — {{ view_date|date:"d M Y" }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'planner:add_task' %}">
+                {% csrf_token %}
+                <input type="hidden" name="date" value="{{ view_date|date:'Y-m-d' }}">
+                <input type="hidden" name="next" value="{% url 'calendarapp:day' view_date.year view_date.month view_date.day %}">
+                <div class="modal-body">
+                    {{ task_form|crispy }}
+                    <p class="text-muted small mb-0">
+                        <strong>Log</strong> if this is already done today. <strong>Schedule</strong> to plan it for later.
+                    </p>
+                </div>
+                <div class="modal-footer gap-2">
+                    <button type="submit" name="action" value="log" class="btn btn-outline-primary flex-fill">
+                        <i class="bi bi-check2-square"></i> Log as Done
+                    </button>
+                    <button type="submit" name="action" value="schedule" class="btn btn-primary flex-fill">
+                        <i class="bi bi-calendar-plus"></i> Schedule for Later
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll(".calendar-slot").forEach(function (row) {
+        row.addEventListener("click", function () {
+            var hour = parseInt(row.dataset.hour, 10);
+            var startInput = document.getElementById("id_start_time");
+            var endInput = document.getElementById("id_end_time");
+
+            if (startInput) startInput.value = String(hour).padStart(2, "0") + ":00";
+            if (endInput) endInput.value = String((hour + 1) % 24).padStart(2, "0") + ":00";
+
+            new bootstrap.Modal(document.getElementById("calendarAddModal")).show();
+        });
+    });
+</script>
+{% endblock %}

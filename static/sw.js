@@ -1,10 +1,6 @@
-const CACHE_NAME = "upsc-tracker-v1";
-const PRECACHE_URLS = ["/static/css/styles.css", "/static/js/csrf.js"];
+const CACHE_NAME = "upsc-tracker-v2";
 
-self.addEventListener("install", (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-    );
+self.addEventListener("install", () => {
     self.skipWaiting();
 });
 
@@ -21,10 +17,12 @@ self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") return;
 
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            if (cached) return cached;
-
-            return fetch(event.request).catch(() => cached);
-        })
+        fetch(event.request)
+            .then((response) => {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(event.request))
     );
 });

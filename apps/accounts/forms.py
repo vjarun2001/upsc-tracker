@@ -1,5 +1,7 @@
 from django import forms
 
+from apps.core.models import ExamProfile
+
 from .models import Profile, User
 
 
@@ -57,4 +59,21 @@ class ProfileForm(forms.ModelForm):
                     "placeholder": "A little about your UPSC prep journey",
                 }
             ),
+        }
+
+
+class ExamProfileForm(forms.ModelForm):
+    class Meta:
+        model = ExamProfile
+
+        fields = [
+            "prelims_date",
+            "mains_date",
+            "interview_date",
+        ]
+
+        widgets = {
+            "prelims_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "mains_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "interview_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }

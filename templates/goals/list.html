@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load crispy_forms_tags %}
+{% load tracker_extras %}
 
 {% block title %}
 Goals & Milestones
@@ -8,13 +9,40 @@ Goals & Milestones
 
 {% block content %}
 
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Goals & Milestones</h3>
+        <p class="text-muted mb-0">Stay focused on long-term success</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-blue"><i class="bi bi-flag"></i></div>
+            <div class="stat-value">{{ goals|length }}</div>
+            <div class="stat-label">Total Goals</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value">{{ completed_count }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    </div>
+
+</div>
+
 <div class="row">
 
     <div class="col-lg-8">
 
         {% for goal in goals %}
 
-        <div class="card shadow-sm mb-3 {% if goal.is_completed %}border-success{% endif %}">
+        <div class="card mb-3 {% if goal.is_completed %}border-success{% endif %}">
 
             <div class="card-body">
 
@@ -28,11 +56,14 @@ Goals & Milestones
                         <span class="badge rounded-pill mb-2" style="background:{{ goal.subject.color }};">{{ goal.subject.name }}</span>
                         {% endif %}
                         {% if goal.target_date %}
-                        <span class="badge bg-secondary">Target: {{ goal.target_date }}</span>
+                        <span class="badge bg-light text-dark border">Target: {{ goal.target_date }}</span>
                         {% endif %}
                     </div>
 
                     <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editGoalModal{{ goal.pk }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
                         <form method="post" action="{% url 'goals:toggle' goal.pk %}">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-outline-success">
@@ -81,6 +112,26 @@ Goals & Milestones
 
         </div>
 
+        <div class="modal fade" id="editGoalModal{{ goal.pk }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Goal</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'goals:edit' goal.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            {{ goal_edit_forms|get_item:goal.pk|crispy }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         {% empty %}
 
         <div class="alert alert-info">No goals yet. Set your first target.</div>
@@ -91,7 +142,7 @@ Goals & Milestones
 
     <div class="col-lg-4">
 
-        <div class="card shadow-sm">
+        <div class="card">
             <div class="card-header"><strong>Add Goal</strong></div>
             <div class="card-body">
                 <form method="post" action="{% url 'goals:add' %}">

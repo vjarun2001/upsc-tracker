@@ -48,13 +48,6 @@ urlpatterns = [
         ),
     ),
     path(
-        "wellness/",
-        include(
-            ("apps.wellness.urls", "wellness"),
-            namespace="wellness",
-        ),
-    ),
-    path(
         "mocktest/",
         include(
             ("apps.mocktest.urls", "mocktest"),
@@ -69,17 +62,24 @@ urlpatterns = [
         ),
     ),
     path(
-        "routines/",
-        include(
-            ("apps.routines.urls", "routines"),
-            namespace="routines",
-        ),
-    ),
-    path(
         "activity/",
         include(
             ("apps.activity.urls", "activity"),
             namespace="activity",
+        ),
+    ),
+    path(
+        "calendar/",
+        include(
+            ("apps.calendarapp.urls", "calendarapp"),
+            namespace="calendarapp",
+        ),
+    ),
+    path(
+        "tracker/",
+        include(
+            ("apps.tracker.urls", "tracker"),
+            namespace="tracker",
         ),
     ),
 ]

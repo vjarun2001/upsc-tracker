@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+Tasks
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Tasks</h3>
+        <p class="text-muted mb-0">Plan and track your UPSC preparation</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-red"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-value">{{ today_count }}</div>
+            <div class="stat-label">Today</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-clock"></i></div>
+            <div class="stat-value">{{ scheduled_count }}</div>
+            <div class="stat-label">Upcoming</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-purple"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ pending_count }}</div>
+            <div class="stat-label">Backlog</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value">{{ completed_count }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="text-end mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+        <i class="bi bi-plus-lg"></i> Add UPSC Task
+    </button>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+        <div class="kanban-column-header"><i class="bi bi-calendar-check"></i> Today <span class="badge bg-secondary">{{ today_count }}</span></div>
+        {% for task in today_tasks %}
+        {% include "planner/_task_card.html" %}
+        {% empty %}
+        <p class="text-muted small">Nothing planned for today.</p>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="kanban-column-header"><i class="bi bi-clock"></i> Scheduled <span class="badge bg-secondary">{{ scheduled_count }}</span></div>
+        {% for task in scheduled_tasks %}
+        {% include "planner/_task_card.html" %}
+        {% empty %}
+        <p class="text-muted small">Nothing scheduled ahead.</p>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="kanban-column-header"><i class="bi bi-exclamation-triangle"></i> Pending <span class="badge bg-secondary">{{ pending_count }}</span></div>
+        {% for task in pending_tasks %}
+        {% include "planner/_task_card.html" %}
+        {% empty %}
+        <p class="text-muted small">No backlog — nice work!</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add UPSC Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'planner:add_task' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'planner:board' %}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                    {{ form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/planner-day.js' %}"></script>
+{% endblock %}

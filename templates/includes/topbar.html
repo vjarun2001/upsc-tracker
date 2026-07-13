@@ -1,0 +1,88 @@
+<header class="app-topbar">
+
+    <div class="d-flex align-items-center gap-3">
+
+        <button class="btn btn-link d-lg-none p-0 topbar-icon-btn" id="mobileSidebarToggle">
+            <i class="bi bi-list fs-3"></i>
+        </button>
+
+        {% if user.is_authenticated %}
+        <div class="phase-tabs">
+            {% for phase in phase_tabs %}
+            <a class="phase-tab {% if phase.is_active %}active{% endif %}"
+               href="{% url 'core:set_phase' phase.key %}?next={{ request.path|urlencode }}">
+                {{ phase.label }}
+                {% if phase.days_remaining is not None %}
+                <span class="phase-days">({{ phase.days_remaining }}d)</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+
+        {% if user.is_authenticated %}
+        <span id="session-badge"
+              class="btn btn-link text-muted px-2"
+              title="Time logged in today"
+              data-seconds="{{ today_seconds }}"
+              data-heartbeat-url="{% url 'accounts:heartbeat' %}">
+            <i class="bi bi-clock-history"></i>
+        </span>
+        {% endif %}
+
+        <button id="theme-toggle" type="button" class="btn btn-link topbar-icon-btn px-2" title="Toggle dark mode">
+            <i class="bi bi-moon-stars"></i>
+        </button>
+
+        {% if user.is_authenticated %}
+
+        <div class="dropdown">
+
+            <a class="btn btn-link topbar-icon-btn position-relative px-2" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="bi bi-bell"></i>
+                {% if notifications_count %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ notifications_count }}
+                </span>
+                {% endif %}
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end" style="min-width:280px;">
+                {% for note in notifications %}
+                <li><a class="dropdown-item" href="{{ note.url }}"><i class="bi {{ note.icon }}"></i> {{ note.message }}</a></li>
+                {% empty %}
+                <li><span class="dropdown-item-text text-muted">No new notifications</span></li>
+                {% endfor %}
+            </ul>
+
+        </div>
+
+        <div class="dropdown">
+
+            <a class="btn btn-link topbar-icon-btn text-decoration-none px-2" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle"></i>
+                <span class="d-none d-md-inline">{{ user.full_name|default:user.email }}</span>
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-gear"></i> Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            </ul>
+
+        </div>
+
+        {% else %}
+
+        <a class="btn btn-outline-primary btn-sm me-2" href="{% url 'account_login' %}">Login</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'account_signup' %}">Register</a>
+
+        {% endif %}
+
+    </div>
+
+</header>

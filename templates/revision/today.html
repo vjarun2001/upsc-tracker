@@ -1,18 +1,47 @@
 {% extends "base.html" %}
 
 {% block title %}
-Revision Scheduler
+Revision Tracker
 {% endblock %}
 
 {% block content %}
 
-<div class="row">
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Revision Tracker</h3>
+        <p class="text-muted mb-0">Smart spaced repetition for effective UPSC preparation</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md-2 text-center">
+        <div class="progress-ring sm" style="--percent: {{ total_percent }}; --ring-color: #0d6efd;">
+            <div class="progress-ring-inner"><span>{{ total_percent }}%</span></div>
+        </div>
+        <div class="mt-2 fw-bold small">TOTAL REVISE</div>
+        <div class="text-muted small">{{ total_done }}/{{ total_topics }}</div>
+    </div>
+
+    {% for ring in stage_rings %}
+    <div class="col-6 col-md-2 text-center">
+        <div class="progress-ring sm" style="--percent: {{ ring.percent }}; --ring-color: #fd7e14;">
+            <div class="progress-ring-inner"><span>{{ ring.percent }}%</span></div>
+        </div>
+        <div class="mt-2 fw-bold small">R{{ ring.stage }} REVISE</div>
+        <div class="text-muted small">{{ ring.done }}/{{ ring.total }}</div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<div class="row g-4">
 
     <div class="col-lg-7">
 
-        <div class="card shadow-sm mb-4">
+        <div class="card">
 
-            <div class="card-header"><strong>Due for Revision</strong></div>
+            <div class="card-header"><strong>Today's Revision</strong></div>
 
             <div class="card-body">
 
@@ -22,20 +51,29 @@ Revision Scheduler
 
                         {% for item in due %}
 
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="list-group-item">
 
-                            <div>
-                                {% if item.topic.subject %}
-                                <span class="badge rounded-pill" style="background:{{ item.topic.subject.color }};">&nbsp;</span>
-                                {% endif %}
-                                {{ item.topic.title }}
-                                <span class="badge bg-secondary">+{{ item.stage_days }}d</span>
-                                <span class="text-muted small">due {{ item.scheduled_date }}</span>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                                <div>
+                                    {% if item.topic.subject %}
+                                    <span class="badge rounded-pill" style="background:{{ item.topic.subject.color }};">&nbsp;</span>
+                                    {% endif %}
+                                    {{ item.topic.title }}
+                                    <span class="badge bg-secondary">R{{ item.stage }}</span>
+                                    {% if item.scheduled_date < today %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% endif %}
+                                </div>
+
                             </div>
 
-                            <form method="post" action="{% url 'revision:mark_done' item.pk %}">
+                            <form method="post" action="{% url 'revision:mark_done' item.pk %}" class="d-flex gap-2">
                                 {% csrf_token %}
-                                <button class="btn btn-sm btn-success">Revised</button>
+                                <span class="text-muted small me-2 align-self-center">How confident are you?</span>
+                                <button type="submit" name="confidence" value="low" class="btn btn-sm btn-outline-danger">Low</button>
+                                <button type="submit" name="confidence" value="medium" class="btn btn-sm btn-outline-warning">Medium</button>
+                                <button type="submit" name="confidence" value="high" class="btn btn-sm btn-outline-success">High</button>
                             </form>
 
                         </div>
@@ -58,7 +96,7 @@ Revision Scheduler
 
     <div class="col-lg-5">
 
-        <div class="card shadow-sm">
+        <div class="card">
 
             <div class="card-header"><strong>Upcoming</strong></div>
 
@@ -69,7 +107,7 @@ Revision Scheduler
                     <ul class="list-group list-group-flush">
                         {% for item in upcoming %}
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>{{ item.topic.title }}</span>
+                            <span>{{ item.topic.title }} <span class="badge bg-secondary">R{{ item.stage }}</span></span>
                             <span class="text-muted small">{{ item.scheduled_date }}</span>
                         </li>
                         {% endfor %}
@@ -77,7 +115,7 @@ Revision Scheduler
 
                 {% else %}
 
-                    <p class="text-muted mb-0">No upcoming revisions scheduled yet. Mark topics complete in Study to auto-schedule revisions.</p>
+                    <p class="text-muted mb-0">No upcoming revisions scheduled yet. Mark topics complete in Syllabus to auto-schedule revisions.</p>
 
                 {% endif %}
 

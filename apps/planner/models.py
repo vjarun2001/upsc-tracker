@@ -1,8 +1,15 @@
 from django.conf import settings
 from django.db import models
 
+from apps.common.choices import Phase
+
 
 class DailyTask(models.Model):
+    class Priority(models.TextChoices):
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -19,6 +26,14 @@ class DailyTask(models.Model):
         related_name="daily_tasks",
     )
 
+    tracker = models.ForeignKey(
+        "tracker.Tracker",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="daily_tasks",
+    )
+
     title = models.CharField(max_length=200)
 
     notes = models.TextField(blank=True)
@@ -26,6 +41,18 @@ class DailyTask(models.Model):
     start_time = models.TimeField(null=True, blank=True)
 
     end_time = models.TimeField(null=True, blank=True)
+
+    priority = models.CharField(
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.MEDIUM,
+    )
+
+    phase = models.CharField(
+        max_length=10,
+        choices=Phase.choices,
+        blank=True,
+    )
 
     is_completed = models.BooleanField(default=False)
 

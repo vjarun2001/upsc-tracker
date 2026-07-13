@@ -12,12 +12,18 @@ from .models import Goal, Milestone
 def goal_list(request):
     goals = Goal.objects.filter(user=request.user).prefetch_related("milestones")
 
+    goal_edit_forms = {
+        goal.pk: GoalForm(instance=goal, user=request.user) for goal in goals
+    }
+
     return render(
         request,
         "goals/list.html",
         {
             "goals": goals,
+            "completed_count": goals.filter(is_completed=True).count(),
             "form": GoalForm(user=request.user),
+            "goal_edit_forms": goal_edit_forms,
             "milestone_form": MilestoneForm(),
         },
     )
@@ -34,6 +40,20 @@ def add_goal(request):
             goal.save()
             messages.success(request, "Goal added.")
             return redirect("goals:list")
+
+    return redirect("goals:list")
+
+
+@login_required
+def edit_goal(request, pk):
+    goal = get_object_or_404(Goal, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = GoalForm(request.POST, instance=goal, user=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Goal updated.")
 
     return redirect("goals:list")
 

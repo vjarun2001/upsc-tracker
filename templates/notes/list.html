@@ -8,6 +8,33 @@ Notes
 
 {% block content %}
 
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Notes</h3>
+        <p class="text-muted mb-0">Jot down anything worth remembering</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-blue"><i class="bi bi-journal-text"></i></div>
+            <div class="stat-value">{{ notes|length }}</div>
+            <div class="stat-label">Total Notes</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-pin-angle-fill"></i></div>
+            <div class="stat-value">{{ pinned_count }}</div>
+            <div class="stat-label">Pinned</div>
+        </div>
+    </div>
+
+</div>
+
 <div class="row">
 
     <div class="col-lg-8">
@@ -18,7 +45,7 @@ Notes
 
             <div class="col-md-6">
 
-                <div class="card shadow-sm h-100">
+                <div class="card h-100">
 
                     <div class="card-body">
 
@@ -35,7 +62,7 @@ Notes
                         <span class="badge rounded-pill mb-2" style="background:{{ note.subject.color }};">{{ note.subject.name }}</span>
                         {% endif %}
 
-                        <p class="card-text text-truncate-3">{{ note.content|truncatewords:30 }}</p>
+                        <p class="card-text">{{ note.content|truncatewords:30 }}</p>
 
                         <div class="d-flex justify-content-between">
 
@@ -66,7 +93,7 @@ Notes
 
     <div class="col-lg-4">
 
-        <div class="card shadow-sm">
+        <div class="card">
 
             <div class="card-header"><strong>Add Note</strong></div>
 

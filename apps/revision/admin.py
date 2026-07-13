@@ -5,5 +5,5 @@ from .models import RevisionSchedule
 
 @admin.register(RevisionSchedule)
 class RevisionScheduleAdmin(admin.ModelAdmin):
-    list_display = ("topic", "user", "stage_days", "scheduled_date", "is_done")
-    list_filter = ("is_done", "stage_days")
+    list_display = ("topic", "user", "stage", "scheduled_date", "is_done", "confidence")
+    list_filter = ("is_done", "stage", "confidence")

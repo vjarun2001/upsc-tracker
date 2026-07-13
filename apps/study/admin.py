@@ -5,12 +5,12 @@ from .models import Subject, Topic, StudySession
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "user")
+    list_display = ("name", "user", "phase")
 
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    list_display = ("title", "subject", "is_completed")
+    list_display = ("title", "subject", "status", "confidence", "weightage")
 
 
 @admin.register(StudySession)

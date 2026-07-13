@@ -16,13 +16,18 @@ urlpatterns = [
         name="add_subject",
     ),
     path(
+        "subject/<int:pk>/edit/",
+        views.edit_subject,
+        name="edit_subject",
+    ),
+    path(
         "add-topic/",
         views.add_topic,
         name="add_topic",
     ),
     path(
-        "topic/<int:pk>/toggle/",
-        views.toggle_topic,
-        name="toggle_topic",
+        "topic/<int:pk>/update/",
+        views.update_topic,
+        name="update_topic",
     ),
 ]

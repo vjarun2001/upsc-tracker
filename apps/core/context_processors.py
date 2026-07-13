@@ -1,6 +1,42 @@
 import random
 
-from .models import Quote
+from django.utils import timezone
+
+from apps.common.choices import Phase
+
+from .models import ExamProfile, Quote
+
+
+def phase_tabs(request):
+    if not request.user.is_authenticated:
+        return {"phase_tabs": []}
+
+    profile, _ = ExamProfile.objects.get_or_create(user=request.user)
+
+    today = timezone.localdate()
+    current = request.session.get("active_phase", Phase.PRELIMS.value)
+
+    date_map = {
+        Phase.PRELIMS.value: profile.prelims_date,
+        Phase.MAINS.value: profile.mains_date,
+        Phase.INTERVIEW.value: profile.interview_date,
+    }
+
+    tabs = []
+    for key, label in Phase.choices:
+        target_date = date_map.get(key)
+        days_remaining = (target_date - today).days if target_date else None
+
+        tabs.append(
+            {
+                "key": key,
+                "label": label,
+                "days_remaining": days_remaining,
+                "is_active": key == current,
+            }
+        )
+
+    return {"phase_tabs": tabs}
 
 
 def login_quote(request):

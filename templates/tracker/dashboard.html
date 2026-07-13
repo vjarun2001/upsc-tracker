@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+Tracker
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Habit Tracker</h3>
+        <p class="text-muted mb-0">Build consistency one day at a time</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrackerModal">
+        <i class="bi bi-plus-lg"></i> Add Tracker
+    </button>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="stat-value">{{ avg_completion }}%</div>
+            <div class="stat-label">Avg Completion</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-fire"></i></div>
+            <div class="stat-value">{{ best_streak }}d</div>
+            <div class="stat-label">Best Streak {% if best_streak_tracker %}· {{ best_streak_tracker }}{% endif %}</div>
+        </div>
+    </div>
+
+</div>
+
+{% for row in rows %}
+
+<div class="card mb-3">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+            <div>
+                <strong><i class="bi {{ row.tracker.icon }}"></i> {{ row.tracker.name }}</strong>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <div class="btn-group btn-group-sm">
+                    <a href="?range=7d#{{ row.tracker.pk }}" class="btn {% if date_range == '7d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7D</a>
+                    <a href="?range=30d#{{ row.tracker.pk }}" class="btn {% if date_range == '30d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30D</a>
+                    <a href="?range=1y#{{ row.tracker.pk }}" class="btn {% if date_range == '1y' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1Y</a>
+                </div>
+
+                <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="modal" data-bs-target="#editTrackerModal{{ row.tracker.pk }}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+
+                <form method="post" action="{% url 'tracker:delete' row.tracker.pk %}" onsubmit="return confirm('Delete this tracker?');">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="heatmap-grid" style="--heat-color: {{ row.color }};" id="{{ row.tracker.pk }}">
+            {% for cell in row.cells %}
+            <div class="heatmap-cell {% if cell.is_today %}is-today{% endif %}" data-level="{{ cell.level }}" title="{{ cell.date }}: {{ cell.value }}"></div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+
+            <div class="small text-muted">
+                Streak: <strong>{{ row.streak }} days</strong> &nbsp; Avg: <strong>{{ row.avg }}%</strong>
+            </div>
+
+            <form method="post" action="{% url 'tracker:log' row.tracker.pk %}" class="d-flex gap-2">
+                {% csrf_token %}
+                {% if row.tracker.kind == "boolean" %}
+                {% if row.today_log.value %}
+                <span class="btn btn-sm btn-success disabled"><i class="bi bi-check-lg"></i> Done Today</span>
+                {% else %}
+                <button class="btn btn-sm btn-outline-secondary">Mark Done</button>
+                {% endif %}
+                {% else %}
+                <input type="number" name="value" class="form-control form-control-sm" style="width:90px;"
+                       value="{{ row.today_log.value|default:0 }}" min="0">
+                <button class="btn btn-sm btn-primary">Log</button>
+                {% endif %}
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal fade" id="editTrackerModal{{ row.tracker.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Tracker</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'tracker:edit' row.tracker.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ row.edit_form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% empty %}
+
+<div class="alert alert-info">No trackers yet. Add your first one.</div>
+
+{% endfor %}
+
+<div class="modal fade" id="addTrackerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Tracker</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'tracker:add' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

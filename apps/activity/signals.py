@@ -6,7 +6,6 @@ from apps.mocktest.models import MockTest
 from apps.notes.models import Note
 from apps.planner.models import DailyTask, PomodoroSession
 from apps.study.models import StudySession
-from apps.wellness.models import SleepLog, WaterLog
 
 from .services import log_activity
 
@@ -85,25 +84,3 @@ def on_goal_created(sender, instance, created, **kwargs):
         )
 
 
-@receiver(post_save, sender=SleepLog)
-def on_sleep_log_created(sender, instance, created, **kwargs):
-    if created:
-        log_activity(
-            instance.user,
-            "sleep",
-            f"Logged sleep: {instance.hours}h",
-            url="/wellness/",
-            icon="bi-moon-stars",
-        )
-
-
-@receiver(post_save, sender=WaterLog)
-def on_water_log_created(sender, instance, created, **kwargs):
-    if created:
-        log_activity(
-            instance.user,
-            "water",
-            f"Logged water intake: {instance.glasses}/{instance.target} glasses",
-            url="/wellness/",
-            icon="bi-droplet",
-        )

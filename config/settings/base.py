@@ -56,12 +56,12 @@ INSTALLED_APPS = [
     "apps.notes",
     "apps.goals",
     "apps.revision",
-    "apps.wellness",
     "apps.mocktest",
     "apps.analytics",
     "apps.notifications",
     "apps.activity",
-    "apps.routines",
+    "apps.calendarapp",
+    "apps.tracker",
 ]
 
 MIDDLEWARE = [
@@ -90,6 +90,7 @@ TEMPLATES = [
                 'apps.notifications.context_processors.notifications',
                 'apps.accounts.context_processors.session_status',
                 'apps.core.context_processors.login_quote',
+                'apps.core.context_processors.phase_tabs',
             ],
         },
     },
@@ -151,7 +152,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 LOGIN_URL = "account_login"
 
-LOGIN_REDIRECT_URL = "study:dashboard"
+LOGIN_REDIRECT_URL = "analytics:dashboard"
 
 LOGOUT_REDIRECT_URL = "core:home"
 

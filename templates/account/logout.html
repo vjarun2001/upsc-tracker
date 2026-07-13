@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
 {% block title %}
 Log Out
@@ -6,34 +6,18 @@ Log Out
 
 {% block content %}
 
-<div class="row justify-content-center">
+<h3 class="fw-bold mb-3 text-center">Log out?</h3>
 
-    <div class="col-md-6 col-lg-5">
+<p class="text-muted mb-4 text-center">Are you sure you want to log out?</p>
 
-        <div class="card shadow-sm">
+<form method="post" action="{% url 'account_logout' %}">
 
-            <div class="card-body p-4 text-center">
+    {% csrf_token %}
 
-                <h3 class="fw-bold mb-3">Log out?</h3>
+    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+        Log Out
+    </button>
 
-                <p class="text-muted mb-4">Are you sure you want to log out?</p>
-
-                <form method="post" action="{% url 'account_logout' %}">
-
-                    {% csrf_token %}
-
-                    <button type="submit" class="btn btn-danger w-100">
-                        Log Out
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
+</form>
 
 {% endblock %}

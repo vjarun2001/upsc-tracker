@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from apps.common.choices import Phase
+
 
 class MockTest(models.Model):
     user = models.ForeignKey(
@@ -15,6 +17,12 @@ class MockTest(models.Model):
         null=True,
         blank=True,
         related_name="mock_tests",
+    )
+
+    phase = models.CharField(
+        max_length=10,
+        choices=Phase.choices,
+        default=Phase.PRELIMS,
     )
 
     name = models.CharField(max_length=200)
@@ -62,3 +70,22 @@ class MockTest(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TestGoal(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="test_goal",
+    )
+
+    target_score = models.PositiveSmallIntegerField(default=100)
+
+    target_accuracy = models.PositiveSmallIntegerField(default=70)
+
+    next_test_date = models.DateField(null=True, blank=True)
+
+    next_test_name = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return f"Test goal for {self.user}"

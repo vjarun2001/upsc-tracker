@@ -2,7 +2,7 @@ from django import forms
 
 from apps.study.models import Subject
 
-from .models import MockTest
+from .models import MockTest, TestGoal
 
 
 class MockTestForm(forms.ModelForm):
@@ -12,6 +12,7 @@ class MockTestForm(forms.ModelForm):
         fields = [
             "name",
             "subject",
+            "phase",
             "test_date",
             "total_questions",
             "correct",
@@ -24,6 +25,7 @@ class MockTestForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Mock test name"}),
             "subject": forms.Select(attrs={"class": "form-select"}),
+            "phase": forms.Select(attrs={"class": "form-select"}),
             "test_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "total_questions": forms.NumberInput(attrs={"class": "form-control"}),
             "correct": forms.NumberInput(attrs={"class": "form-control"}),
@@ -52,3 +54,22 @@ class MockTestForm(forms.ModelForm):
                 )
 
         return cleaned
+
+
+class TestGoalForm(forms.ModelForm):
+    class Meta:
+        model = TestGoal
+
+        fields = [
+            "target_score",
+            "target_accuracy",
+            "next_test_name",
+            "next_test_date",
+        ]
+
+        widgets = {
+            "target_score": forms.NumberInput(attrs={"class": "form-control"}),
+            "target_accuracy": forms.NumberInput(attrs={"class": "form-control", "max": 100}),
+            "next_test_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Mock Test 5"}),
+            "next_test_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        }

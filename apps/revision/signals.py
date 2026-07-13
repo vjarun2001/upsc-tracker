@@ -8,27 +8,20 @@ from apps.study.models import Topic
 
 from .models import RevisionSchedule
 
-REVISION_INTERVALS_DAYS = [1, 3, 7, 15, 30]
+FIRST_STAGE_INTERVAL_DAYS = 1
 
 
 @receiver(post_save, sender=Topic)
-def schedule_revisions_on_completion(sender, instance, created, **kwargs):
-    if created or not instance.is_completed:
+def schedule_first_revision_on_completion(sender, instance, created, **kwargs):
+    if created or instance.status != Topic.Status.COMPLETED:
         return
 
     if RevisionSchedule.objects.filter(topic=instance).exists():
         return
 
-    today = timezone.localdate()
-
-    RevisionSchedule.objects.bulk_create(
-        [
-            RevisionSchedule(
-                user=instance.subject.user,
-                topic=instance,
-                stage_days=days,
-                scheduled_date=today + timedelta(days=days),
-            )
-            for days in REVISION_INTERVALS_DAYS
-        ]
+    RevisionSchedule.objects.create(
+        user=instance.subject.user,
+        topic=instance,
+        stage=1,
+        scheduled_date=timezone.localdate() + timedelta(days=FIRST_STAGE_INTERVAL_DAYS),
     )

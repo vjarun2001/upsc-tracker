@@ -15,6 +15,7 @@ def note_list(request):
         "notes/list.html",
         {
             "notes": notes,
+            "pinned_count": notes.filter(is_pinned=True).count(),
             "form": NoteForm(user=request.user),
         },
     )
@@ -38,7 +39,11 @@ def add_note(request):
 
         notes = Note.objects.filter(user=request.user).select_related("subject", "topic")
 
-        return render(request, "notes/list.html", {"notes": notes, "form": form})
+        return render(
+            request,
+            "notes/list.html",
+            {"notes": notes, "pinned_count": notes.filter(is_pinned=True).count(), "form": form},
+        )
 
     return redirect("notes:list")
 
