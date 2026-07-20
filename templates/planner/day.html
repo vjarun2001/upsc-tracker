@@ -61,7 +61,7 @@ Daily Planner
                                        {% if task.is_completed %}checked{% endif %}
                                        data-url="{% url 'planner:toggle_task' task.pk %}">
 
-                                <label class="form-check-label">
+                                <label class="form-check-label {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">
 
                                     {% if task.subject %}
                                     <span class="badge rounded-pill" style="background:{{ task.subject.color }};">&nbsp;</span>

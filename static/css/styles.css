@@ -539,6 +539,7 @@ footer{
 /* ---------- Dark mode overrides ---------- */
 
 [data-bs-theme="dark"] body{ background:#15161c; }
+[data-bs-theme="dark"] .auth-page{ background:#15161c; }
 [data-bs-theme="dark"] .app-topbar{ background:#1b1d24; border-color:#2a2d37; }
 [data-bs-theme="dark"] .stat-card,
 [data-bs-theme="dark"] .card,
@@ -546,7 +547,12 @@ footer{
 [data-bs-theme="dark"] .auth-card{ background:#1e2028; color:#e6e6e9; }
 [data-bs-theme="dark"] .phase-tabs{ background:#2a2d37; }
 [data-bs-theme="dark"] .auth-tabs{ background:#2a2d37; }
+[data-bs-theme="dark"] .auth-tab{ color:#c9cdd6; }
 [data-bs-theme="dark"] .auth-tab.active{ background:#1e2028; color:#fff; }
+[data-bs-theme="dark"] .auth-close{ color:#c9cdd6; }
+[data-bs-theme="dark"] .auth-divider{ color:#c9cdd6; }
+[data-bs-theme="dark"] .auth-divider::before,
+[data-bs-theme="dark"] .auth-divider::after{ background:#33363f; }
 [data-bs-theme="dark"] .auth-card .form-control{ background:#262832; border-color:#33363f; color:#e6e6e9; }
 [data-bs-theme="dark"] .progress-ring-inner{ background:#1e2028; color:#e6e6e9; }
 [data-bs-theme="dark"] .topbar-icon-btn{ color:#c9cdd6; }
@@ -565,3 +571,16 @@ footer{
 [data-bs-theme="dark"] .accordion-button{ background:#1e2028; color:#e6e6e9; }
 [data-bs-theme="dark"] .form-control,
 [data-bs-theme="dark"] .form-select{ background:#1e2028; border-color:#33363f; color:#e6e6e9; }
+
+/* ---------- Light mode sidebar (follows the theme toggle) ---------- */
+
+[data-bs-theme="light"] .app-sidebar{ background:#fff; color:#495057; border-right:1px solid #e9ecef; }
+[data-bs-theme="light"] .sidebar-brand{ color:#212529; }
+[data-bs-theme="light"] .sidebar-toggle-row{ border-bottom-color:#e9ecef; }
+[data-bs-theme="light"] .sidebar-collapse-btn{ background:#f1f2f5; border-color:#e3e5ea; color:#495057; }
+[data-bs-theme="light"] .sidebar-collapse-btn:hover{ background:var(--primary); border-color:var(--primary); color:#fff; }
+[data-bs-theme="light"] .sidebar-nav-item{ color:#495057; }
+[data-bs-theme="light"] .sidebar-nav-item:hover{ background:#f1f2f5; color:#212529; }
+[data-bs-theme="light"] .sidebar-nav-item.active{ background:var(--gold); color:#151515; }
+[data-bs-theme="light"] .sidebar-section-title{ color:#8a8f9a; }
+[data-bs-theme="light"] .sidebar-footer{ border-top-color:#e9ecef; }

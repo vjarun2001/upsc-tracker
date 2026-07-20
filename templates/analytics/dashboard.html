@@ -262,9 +262,9 @@ Dashboard
                 </div>
                 <div style="max-height:260px; overflow-y:auto;">
                     {% for task in today_tasks %}
-                    <div class="d-flex align-items-center gap-2 mb-2 {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">
+                    <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi {% if task.is_completed %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %}"></i>
-                        <span>{{ task.title }}</span>
+                        <span class="{% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</span>
                     </div>
                     {% endfor %}
                     {% for revision in due_revisions %}

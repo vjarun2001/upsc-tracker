@@ -9,7 +9,7 @@
             <input class="form-check-input task-toggle" type="checkbox"
                    {% if task.is_completed %}checked{% endif %}
                    data-url="{% url 'planner:toggle_task' task.pk %}">
-            <label class="form-check-label fw-semibold">{{ task.title }}</label>
+            <label class="form-check-label fw-semibold {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</label>
         </div>
 
         <div class="d-flex gap-1">
