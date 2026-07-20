@@ -366,16 +366,18 @@ footer{
 .heatmap-grid{
     display:grid;
     grid-auto-flow:column;
-    grid-template-rows:repeat(7, 13px);
+    grid-template-rows:repeat(7, 11px);
+    grid-auto-columns:11px;
     gap:3px;
     overflow-x:auto;
-    padding-bottom:.25rem;
+    padding:4px;
+    justify-content:start;
 }
 
 .heatmap-cell{
-    width:13px;
-    height:13px;
-    border-radius:3px;
+    width:11px;
+    height:11px;
+    border-radius:2px;
     background:#ebedf0;
 }
 
@@ -383,6 +385,35 @@ footer{
 .heatmap-cell[data-level="2"]{ background:color-mix(in srgb, var(--heat-color,#6f42c1) 65%, #ebedf0); }
 .heatmap-cell[data-level="3"]{ background:var(--heat-color,#6f42c1); }
 .heatmap-cell.is-today{ outline:2px solid var(--primary); outline-offset:1px; }
+
+[data-bs-theme="dark"] .heatmap-cell{ background:#2d2f3a; }
+[data-bs-theme="dark"] .heatmap-cell[data-level="1"]{ background:color-mix(in srgb, var(--heat-color,#6f42c1) 35%, #2d2f3a); }
+[data-bs-theme="dark"] .heatmap-cell[data-level="2"]{ background:color-mix(in srgb, var(--heat-color,#6f42c1) 65%, #2d2f3a); }
+[data-bs-theme="dark"] .heatmap-cell[data-level="3"]{ background:var(--heat-color,#6f42c1); }
+
+/* ---------- Pomodoro floating widget ---------- */
+
+.pomodoro-floating-widget{
+    position:fixed;
+    right:1.5rem;
+    bottom:1.5rem;
+    z-index:1080;
+}
+
+.pomodoro-floating-link{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    padding:.65rem 1.1rem;
+    border-radius:999px;
+    background:var(--primary,#f0635a);
+    color:#fff;
+    font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    text-decoration:none;
+}
+
+.pomodoro-floating-link:hover{ color:#fff; opacity:.92; }
 
 /* ---------- Fade / toast ---------- */
 
@@ -518,7 +549,6 @@ footer{
 [data-bs-theme="dark"] .auth-tab.active{ background:#1e2028; color:#fff; }
 [data-bs-theme="dark"] .auth-card .form-control{ background:#262832; border-color:#33363f; color:#e6e6e9; }
 [data-bs-theme="dark"] .progress-ring-inner{ background:#1e2028; color:#e6e6e9; }
-[data-bs-theme="dark"] .heatmap-cell{ background:#262832; }
 [data-bs-theme="dark"] .topbar-icon-btn{ color:#c9cdd6; }
 [data-bs-theme="dark"] .topbar-icon-btn:hover{ color:var(--primary); }
 [data-bs-theme="dark"] .phase-tab{ --phase-tab-hover-color:#f1f2f5; }

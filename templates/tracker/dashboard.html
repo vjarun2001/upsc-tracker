@@ -53,9 +53,9 @@ Tracker
             <div class="d-flex align-items-center gap-2">
 
                 <div class="btn-group btn-group-sm">
-                    <a href="?range=7d#{{ row.tracker.pk }}" class="btn {% if date_range == '7d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7D</a>
-                    <a href="?range=30d#{{ row.tracker.pk }}" class="btn {% if date_range == '30d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30D</a>
-                    <a href="?range=1y#{{ row.tracker.pk }}" class="btn {% if date_range == '1y' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1Y</a>
+                    <a href="?range=7d" class="btn range-switch-link {% if date_range == '7d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7D</a>
+                    <a href="?range=30d" class="btn range-switch-link {% if date_range == '30d' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30D</a>
+                    <a href="?range=1y" class="btn range-switch-link {% if date_range == '1y' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1Y</a>
                 </div>
 
                 <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="modal" data-bs-target="#editTrackerModal{{ row.tracker.pk }}">
@@ -150,4 +150,28 @@ Tracker
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll(".heatmap-grid").forEach(function (grid) {
+        grid.scrollLeft = grid.scrollWidth;
+    });
+
+    if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+    }
+
+    document.querySelectorAll(".range-switch-link").forEach(function (link) {
+        link.addEventListener("click", function () {
+            sessionStorage.setItem("tracker-scroll-y", String(window.scrollY));
+        });
+    });
+
+    var savedScrollY = sessionStorage.getItem("tracker-scroll-y");
+    if (savedScrollY !== null) {
+        window.scrollTo(0, parseInt(savedScrollY, 10));
+        sessionStorage.removeItem("tracker-scroll-y");
+    }
+</script>
 {% endblock %}

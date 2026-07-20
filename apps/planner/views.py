@@ -201,12 +201,12 @@ def pomodoro(request):
     today = timezone.localdate()
 
     today_tasks = DailyTask.objects.filter(user=request.user, date=today)
-    subjects = Subject.objects.filter(user=request.user)
+    subjects = Subject.objects.filter(user=request.user).prefetch_related("topics")
 
     recent_sessions = PomodoroSession.objects.filter(
         user=request.user,
         started_at__date=today,
-    ).select_related("task", "subject")
+    ).select_related("task", "subject", "topic")
 
     preselected_task = request.GET.get("task")
     preselected_subject = request.GET.get("subject")
@@ -215,6 +215,11 @@ def pomodoro(request):
         "log_url": reverse("planner:log_pomodoro_session"),
         "preselected_task": preselected_task,
         "preselected_subject": preselected_subject,
+    }
+
+    topics_by_subject = {
+        subject.pk: [{"id": topic.pk, "title": topic.title} for topic in subject.topics.all()]
+        for subject in subjects
     }
 
     from apps.analytics.services import compute_current_streak
@@ -232,6 +237,7 @@ def pomodoro(request):
             "subjects": subjects,
             "recent_sessions": recent_sessions,
             "client_config": client_config,
+            "topics_by_subject": topics_by_subject,
             "stats": stats,
         },
     )

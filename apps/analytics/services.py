@@ -44,6 +44,17 @@ def compute_current_streak(user):
     return streak
 
 
+def _focus_pomodoro_sessions(user, **filters):
+    from apps.planner.models import PomodoroSession
+
+    return PomodoroSession.objects.filter(
+        user=user,
+        is_completed=True,
+        session_type=PomodoroSession.SessionType.FOCUS,
+        **filters,
+    ).select_related("subject")
+
+
 def minutes_per_subject(user):
     from apps.study.models import StudySession
 
@@ -52,6 +63,12 @@ def minutes_per_subject(user):
     totals = {}
     for session in sessions:
         totals[session.subject.name] = totals.get(session.subject.name, 0) + session.duration_minutes
+
+    for session in _focus_pomodoro_sessions(user):
+        if not session.subject_id:
+            continue
+        minutes = round(session.actual_duration_seconds / 60)
+        totals[session.subject.name] = totals.get(session.subject.name, 0) + minutes
 
     return list(totals.keys()), list(totals.values())
 
@@ -70,13 +87,18 @@ def daily_minutes_last_n_days(user, n=14):
         if day in totals:
             totals[day] += session.duration_minutes
 
+    for session in _focus_pomodoro_sessions(user, started_at__date__gte=days[0]):
+        day = session.started_at.date()
+        if day in totals:
+            totals[day] += round(session.actual_duration_seconds / 60)
+
     labels = [day.strftime("%d %b") for day in days]
     values = [totals[day] for day in days]
 
     return labels, values
 
 
-def weekly_study_hours(user):
+def weekly_study_minutes(user):
     from apps.study.models import StudySession
 
     today = timezone.localdate()
@@ -91,10 +113,68 @@ def weekly_study_hours(user):
         if day in totals:
             totals[day] += session.duration_minutes
 
-    labels = [day.strftime("%a") for day in days]
-    hours = [round(totals[day] / 60, 1) for day in days]
+    for session in _focus_pomodoro_sessions(user, started_at__date__gte=monday):
+        day = session.started_at.date()
+        if day in totals:
+            totals[day] += round(session.actual_duration_seconds / 60)
 
-    return labels, hours
+    labels = [day.strftime("%a") for day in days]
+    minutes = [totals[day] for day in days]
+
+    return labels, minutes
+
+
+def daily_study_breakdown(user):
+    """Per-day (current week) list of {label, minutes} entries for the Study Hours chart click-through."""
+    from apps.study.models import StudySession
+
+    today = timezone.localdate()
+    monday = today - timedelta(days=today.weekday())
+    days = [monday + timedelta(days=i) for i in range(7)]
+
+    breakdown = {day: {} for day in days}
+
+    def add(day, label, minutes):
+        if day not in breakdown or not minutes:
+            return
+        breakdown[day][label] = breakdown[day].get(label, 0) + minutes
+
+    for session in StudySession.objects.filter(user=user, start_time__date__gte=monday).select_related(
+        "subject", "topic"
+    ):
+        day = session.start_time.date()
+        label = session.subject.name
+        if session.topic:
+            label = f"{label}: {session.topic.title}"
+        add(day, label, session.duration_minutes)
+
+    for session in _focus_pomodoro_sessions(user, started_at__date__gte=monday).select_related(
+        "task", "subject", "topic"
+    ):
+        day = session.started_at.date()
+        minutes = round(session.actual_duration_seconds / 60)
+
+        if session.topic:
+            label = session.topic.title
+            if session.subject:
+                label = f"{session.subject.name}: {label}"
+        elif session.subject:
+            label = session.subject.name
+        elif session.task:
+            label = session.task.title
+        else:
+            label = "Focus session"
+
+        add(day, label, minutes)
+
+    return {
+        day.isoformat(): sorted(
+            [{"label": label, "minutes": minutes} for label, minutes in entries.items()],
+            key=lambda e: e["minutes"],
+            reverse=True,
+        )
+        for day, entries in breakdown.items()
+    }
 
 
 def task_trend(user, n=14):
@@ -228,14 +308,14 @@ def routine_minutes_today(user):
 
 def build_daily_recap(user):
     from apps.accounts.services import today_seconds as accounts_today_seconds
-    from apps.activity.services import get_today_activity
+    from apps.goals.models import Goal
     from apps.mocktest.models import MockTest
     from apps.planner.models import DailyTask, PomodoroSession
     from apps.tracker.models import Tracker, TrackerLog
 
     today = timezone.localdate()
 
-    from apps.study.models import StudySession
+    from apps.study.models import StudySession, Topic
 
     study_minutes = sum(
         s.duration_minutes
@@ -256,12 +336,12 @@ def build_daily_recap(user):
     tasks_total = tasks_qs.count()
     tasks_done = tasks_qs.filter(is_completed=True).count()
 
-    verb_counts = {}
-    for activity in get_today_activity(user):
-        verb_counts[activity.verb] = verb_counts.get(activity.verb, 0) + 1
-
-    topics_done_today = verb_counts.get("topic_completed", 0)
-    goals_done_today = verb_counts.get("goal_completed", 0)
+    topics_done_today = Topic.objects.filter(
+        subject__user=user, status=Topic.Status.COMPLETED, completed_at__date=today
+    ).count()
+    goals_done_today = Goal.objects.filter(
+        user=user, is_completed=True, completed_at__date=today
+    ).count()
 
     trackers_total = Tracker.objects.filter(user=user, is_active=True).count()
     trackers_logged = TrackerLog.objects.filter(
@@ -317,7 +397,7 @@ def build_daily_recap(user):
     else:
         headline = "No study activity logged yet today."
 
-    daily_target_minutes = 240
+    daily_target_minutes = user.profile.daily_study_target_minutes or 240
 
     return {
         "headline": headline,

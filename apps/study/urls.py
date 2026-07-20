@@ -30,4 +30,19 @@ urlpatterns = [
         views.update_topic,
         name="update_topic",
     ),
+    path(
+        "topic/<int:pk>/move/",
+        views.move_topic,
+        name="move_topic",
+    ),
+    path(
+        "topic/<int:pk>/reparent/",
+        views.reparent_topic,
+        name="reparent_topic",
+    ),
+    path(
+        "topic/<int:pk>/log/",
+        views.topic_time_log,
+        name="topic_log",
+    ),
 ]

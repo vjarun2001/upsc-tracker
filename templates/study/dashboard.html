@@ -131,6 +131,8 @@ Syllabus
                         <thead>
                             <tr class="small text-muted text-uppercase">
                                 <th>Topic</th>
+                                <th>Time Spent</th>
+                                <th>Move</th>
                                 <th>Status</th>
                                 <th>Confidence</th>
                                 <th>Weightage</th>
@@ -142,6 +144,41 @@ Syllabus
                                 <td style="padding-left:{{ depth|add:1 }}rem;">
                                     {% if depth == 0 %}<i class="bi bi-diamond-fill text-primary small me-1"></i>{% endif %}
                                     {{ topic.title }}
+                                </td>
+                                <td class="text-muted small">
+                                    <a href="{% url 'study:topic_log' topic.pk %}" class="text-decoration-none">
+                                        {% with minutes=topic_minutes|get_item:topic.pk %}
+                                        {% if minutes %}{{ minutes }}m{% else %}—{% endif %}
+                                        {% endwith %}
+                                    </a>
+                                </td>
+                                <td style="min-width:260px;">
+                                    <div class="d-flex gap-1 align-items-center flex-nowrap">
+                                        <form method="post" action="{% url 'study:move_topic' topic.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" name="direction" value="up" class="btn btn-sm btn-outline-secondary" title="Move up">
+                                                <i class="bi bi-arrow-up"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'study:move_topic' topic.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" name="direction" value="down" class="btn btn-sm btn-outline-secondary" title="Move down">
+                                                <i class="bi bi-arrow-down"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'study:reparent_topic' topic.pk %}" class="flex-grow-1">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <select name="parent" class="form-select form-select-sm" style="min-width:160px;" onchange="this.form.submit()" title="Move under...">
+                                                <option value="" {% if not topic.parent_id %}selected{% endif %}>Top Level</option>
+                                                {% for pk, label in move_targets|get_item:topic.pk %}
+                                                <option value="{{ pk }}" {% if topic.parent_id == pk %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </form>
+                                    </div>
                                 </td>
                                 <td>
                                     <form method="post" action="{% url 'study:update_topic' topic.pk %}">

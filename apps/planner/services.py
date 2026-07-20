@@ -42,7 +42,7 @@ def timer_stats(user, days=7):
     ]
 
     focus_seconds = sum(s.actual_duration_seconds for s in focus_sessions if s.is_completed)
-    break_seconds = sum(s.actual_duration_seconds for s in break_sessions)
+    break_seconds = sum(s.actual_duration_seconds for s in break_sessions if s.is_completed)
 
     completed_count = sum(1 for s in sessions if s.is_completed)
 

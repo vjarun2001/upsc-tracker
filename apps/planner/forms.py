@@ -1,6 +1,6 @@
 from django import forms
 
-from apps.study.models import Subject
+from apps.study.models import Subject, Topic
 from apps.tracker.models import Tracker
 
 from .models import DailyTask, PomodoroSession
@@ -107,6 +107,7 @@ class PomodoroSessionLogForm(forms.ModelForm):
         fields = [
             "task",
             "subject",
+            "topic",
             "session_type",
             "planned_duration_minutes",
             "actual_duration_seconds",
@@ -118,6 +119,25 @@ class PomodoroSessionLogForm(forms.ModelForm):
 
         self.fields["task"].queryset = DailyTask.objects.filter(user=user)
         self.fields["task"].required = False
+
+        self.fields["topic"].queryset = Topic.objects.filter(subject__user=user)
+        self.fields["topic"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+
+        if cleaned.get("session_type") == PomodoroSession.SessionType.FOCUS:
+            task = cleaned.get("task")
+            subject = cleaned.get("subject")
+            topic = cleaned.get("topic")
+
+            if not task and not subject:
+                raise forms.ValidationError("Select a task or subject before starting a Focus session.")
+
+            if not task and subject and not topic:
+                raise forms.ValidationError("Select a topic before starting a Focus session on a subject.")
+
+        return cleaned
 
         self.fields["subject"].queryset = Subject.objects.filter(user=user)
         self.fields["subject"].required = False

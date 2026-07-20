@@ -27,6 +27,8 @@ class Goal(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    completed_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["is_completed", "target_date", "-created_at"]
 

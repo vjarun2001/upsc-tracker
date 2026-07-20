@@ -4,8 +4,6 @@ document.addEventListener("change", function (event) {
         return;
     }
 
-    const row = checkbox.closest("[data-task-row]");
-
     fetch(checkbox.dataset.url, {
         method: "POST",
         headers: { "X-CSRFToken": getCsrfToken() },
@@ -13,8 +11,9 @@ document.addEventListener("change", function (event) {
         .then((response) => response.json())
         .then((data) => {
             if (data.ok) {
-                row.classList.toggle("text-decoration-line-through", data.is_completed);
-                row.classList.toggle("text-muted", data.is_completed);
+                // Reload so the stat cards and Today/Scheduled/Pending buckets
+                // (which are server-rendered and depend on is_completed) stay accurate.
+                window.location.reload();
             }
         });
 });
@@ -29,8 +28,6 @@ document.addEventListener("click", function (event) {
         return;
     }
 
-    const row = button.closest("[data-task-row]");
-
     fetch(button.dataset.url, {
         method: "POST",
         headers: { "X-CSRFToken": getCsrfToken() },
@@ -38,7 +35,7 @@ document.addEventListener("click", function (event) {
         .then((response) => response.json())
         .then((data) => {
             if (data.ok) {
-                row.remove();
+                window.location.reload();
             }
         });
 });

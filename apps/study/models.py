@@ -71,7 +71,14 @@ class Topic(models.Model):
 
     weightage = models.PositiveSmallIntegerField(default=1)
 
+    order = models.PositiveIntegerField(default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["order", "id"]
 
     @property
     def is_completed(self):

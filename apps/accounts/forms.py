@@ -32,6 +32,7 @@ class ProfileForm(forms.ModelForm):
             "phone",
             "timezone",
             "bio",
+            "daily_study_target_minutes",
         ]
 
         widgets = {
@@ -59,6 +60,16 @@ class ProfileForm(forms.ModelForm):
                     "placeholder": "A little about your UPSC prep journey",
                 }
             ),
+            "daily_study_target_minutes": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 1,
+                }
+            ),
+        }
+
+        labels = {
+            "daily_study_target_minutes": "Daily study goal (minutes)",
         }
 
 

@@ -84,6 +84,13 @@
 
     <script src="{% static 'js/heartbeat.js' %}"></script>
 
+    {% if user.is_authenticated %}
+    <script>
+        window.POMODORO_LOG_URL = "{% url 'planner:log_pomodoro_session' %}";
+    </script>
+    <script src="{% static 'js/pomodoro-core.js' %}"></script>
+    {% endif %}
+
     <script>
         (function () {
             var themeBtn = document.getElementById("theme-toggle");

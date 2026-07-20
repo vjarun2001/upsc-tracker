@@ -145,7 +145,8 @@ Dashboard
         <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong><i class="bi bi-clock text-muted"></i> STUDY HOURS</strong>
+                    <strong><i class="bi bi-clock text-muted"></i> STUDY MINUTES</strong>
+                    <small class="text-muted">Click a bar for details</small>
                 </div>
                 <canvas id="weekChart" height="160"></canvas>
             </div>
@@ -302,6 +303,20 @@ Dashboard
 
 </div>
 
+<div class="modal fade" id="studyBreakdownModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studyBreakdownTitle">Study Breakdown</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="studyBreakdownList" class="list-group list-group-flush"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ chart_data|json_script:"chart-data" }}
 
 {% endblock %}
@@ -311,13 +326,53 @@ Dashboard
 <script>
     const chartData = JSON.parse(document.getElementById("chart-data").textContent);
 
-    new Chart(document.getElementById("weekChart"), {
+    const weekChart = new Chart(document.getElementById("weekChart"), {
         type: "bar",
         data: {
             labels: chartData.week_labels,
-            datasets: [{ label: "Hours", data: chartData.week_hours, backgroundColor: "#f0635a", borderRadius: 6 }],
+            datasets: [{ label: "Minutes", data: chartData.week_minutes, backgroundColor: "#f0635a", borderRadius: 6 }],
         },
-        options: { plugins: { legend: { display: false } } },
+        options: {
+            plugins: { legend: { display: false } },
+            onClick: (evt) => {
+                const points = weekChart.getElementsAtEventForMode(evt, "nearest", { intersect: true }, true);
+                if (!points.length) return;
+
+                const index = points[0].index;
+                const date = chartData.week_dates[index];
+                const label = chartData.week_labels[index];
+                const entries = (chartData.week_breakdown && chartData.week_breakdown[date]) || [];
+
+                document.getElementById("studyBreakdownTitle").textContent = `Study Breakdown — ${label}`;
+
+                const list = document.getElementById("studyBreakdownList");
+                list.innerHTML = "";
+
+                if (!entries.length) {
+                    const li = document.createElement("li");
+                    li.className = "list-group-item text-muted";
+                    li.textContent = "Nothing logged this day.";
+                    list.appendChild(li);
+                } else {
+                    entries.forEach((entry) => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+                        const labelSpan = document.createElement("span");
+                        labelSpan.textContent = entry.label;
+
+                        const minutesStrong = document.createElement("strong");
+                        minutesStrong.textContent = `${entry.minutes}m`;
+
+                        li.appendChild(labelSpan);
+                        li.appendChild(minutesStrong);
+                        list.appendChild(li);
+                    });
+                }
+
+                new bootstrap.Modal(document.getElementById("studyBreakdownModal")).show();
+            },
+        },
     });
 
     new Chart(document.getElementById("trendChart"), {

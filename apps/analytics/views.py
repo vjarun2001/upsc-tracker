@@ -15,7 +15,7 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet
 
 from apps.mocktest.models import MockTest
-from apps.planner.models import DailyTask
+from apps.planner.models import DailyTask, PomodoroSession
 from apps.revision.models import RevisionSchedule
 from apps.study.models import StudySession, Subject, Topic
 from apps.tracker.models import Tracker, TrackerLog
@@ -29,7 +29,9 @@ def _analytics_context(user):
     mock_labels, mock_marks, mock_accuracy = services.mock_test_trend(user)
     topic_labels, topic_percentages = services.topic_completion_per_subject(user)
     routine_labels, routine_minutes = services.routine_minutes_today(user)
-    week_labels, week_hours = services.weekly_study_hours(user)
+    week_labels, week_minutes = services.weekly_study_minutes(user)
+    week_breakdown = services.daily_study_breakdown(user)
+    week_dates = list(week_breakdown.keys())
     trend_labels, trend_done, trend_pending = services.task_trend(user)
     revision_labels, revision_done, revision_overdue = services.revision_activity(user)
     confidence_counts = services.confidence_split(user)
@@ -45,6 +47,12 @@ def _analytics_context(user):
         "syllabus_percent": round(completed_topics / total_topics * 100) if total_topics else 0,
         "total_minutes": sum(
             s.duration_minutes for s in StudySession.objects.filter(user=user)
+        )
+        + sum(
+            round(p.actual_duration_seconds / 60)
+            for p in PomodoroSession.objects.filter(
+                user=user, is_completed=True, session_type=PomodoroSession.SessionType.FOCUS
+            )
         ),
         "total_mock_tests": MockTest.objects.filter(user=user).count(),
         "revision_percent": services.revision_completion_summary(user),
@@ -56,7 +64,9 @@ def _analytics_context(user):
             "daily_labels": daily_labels,
             "daily_minutes": daily_minutes,
             "week_labels": week_labels,
-            "week_hours": week_hours,
+            "week_minutes": week_minutes,
+            "week_dates": week_dates,
+            "week_breakdown": week_breakdown,
             "trend_labels": trend_labels,
             "trend_done": trend_done,
             "trend_pending": trend_pending,

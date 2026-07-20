@@ -82,6 +82,8 @@ class Profile(models.Model):
         blank=True,
     )
 
+    daily_study_target_minutes = models.PositiveIntegerField(default=240)
+
     def __str__(self):
         return self.user.email
 

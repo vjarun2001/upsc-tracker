@@ -109,6 +109,19 @@ Timer
                         </select>
                     </div>
 
+                    <div class="col-12 mt-3">
+                        <label class="form-label">Topic <span class="text-muted small">(required when focusing on a subject)</span></label>
+                        <select id="topic-select" class="form-select">
+                            <option value="">-- Select a subject first --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <div id="focus-link-warning" class="alert alert-warning small mb-0 mt-2 d-none">
+                            Select a task, or a subject + topic, before starting a Focus session.
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -149,7 +162,13 @@ Timer
 
                 {% for session in recent_sessions %}
                 <li class="list-group-item d-flex justify-content-between">
-                    <span>{{ session.get_session_type_display }}</span>
+                    <span>
+                        {{ session.get_session_type_display }}
+                        {% if session.topic %}<span class="text-muted small">· {{ session.topic.title }}</span>
+                        {% elif session.subject %}<span class="text-muted small">· {{ session.subject.name }}</span>
+                        {% elif session.task %}<span class="text-muted small">· {{ session.task.title }}</span>
+                        {% endif %}
+                    </span>
                     <span>{% widthratio session.actual_duration_seconds 60 1 %} min {% if session.is_completed %}✅{% else %}⏹{% endif %}</span>
                 </li>
                 {% empty %}
@@ -165,6 +184,7 @@ Timer
 </div>
 
 {{ client_config|json_script:"planner-config" }}
+{{ topics_by_subject|json_script:"topics-by-subject" }}
 
 {% endblock %}
 

@@ -66,12 +66,18 @@ Notes
 
                         <div class="d-flex justify-content-between">
 
-                            <a class="btn btn-sm btn-outline-primary" href="{% url 'notes:edit' note.pk %}">Edit</a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#viewNoteModal{{ note.pk }}">
+                                <i class="bi bi-eye"></i> View
+                            </button>
 
-                            <form method="post" action="{% url 'notes:delete' note.pk %}" onsubmit="return confirm('Delete this note?');">
-                                {% csrf_token %}
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'notes:edit' note.pk %}">Edit</a>
+
+                                <form method="post" action="{% url 'notes:delete' note.pk %}" onsubmit="return confirm('Delete this note?');">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
 
                         </div>
 
@@ -79,6 +85,29 @@ Notes
 
                 </div>
 
+            </div>
+
+            <div class="modal fade" id="viewNoteModal{{ note.pk }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                {% if note.is_pinned %}<i class="bi bi-pin-angle-fill text-warning"></i>{% endif %}
+                                {{ note.title }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% if note.subject %}
+                            <span class="badge rounded-pill mb-3" style="background:{{ note.subject.color }};">{{ note.subject.name }}</span>
+                            {% endif %}
+                            <p style="white-space:pre-wrap;">{{ note.content }}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a class="btn btn-primary" href="{% url 'notes:edit' note.pk %}">Edit Note</a>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {% empty %}

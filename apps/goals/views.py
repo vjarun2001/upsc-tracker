@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from apps.activity.services import log_activity
 
@@ -64,9 +65,11 @@ def toggle_goal(request, pk):
 
     if request.method == "POST":
         goal.is_completed = not goal.is_completed
-        goal.save(update_fields=["is_completed"])
 
         if goal.is_completed:
+            goal.completed_at = timezone.now()
+            goal.save(update_fields=["is_completed", "completed_at"])
+
             log_activity(
                 request.user,
                 "goal_completed",
@@ -74,6 +77,9 @@ def toggle_goal(request, pk):
                 url="/goals/",
                 icon="bi-bullseye",
             )
+        else:
+            goal.completed_at = None
+            goal.save(update_fields=["is_completed", "completed_at"])
 
     return redirect("goals:list")
 

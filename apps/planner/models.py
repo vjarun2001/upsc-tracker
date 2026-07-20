@@ -98,6 +98,14 @@ class PomodoroSession(models.Model):
         related_name="pomodoro_sessions",
     )
 
+    topic = models.ForeignKey(
+        "study.Topic",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pomodoro_sessions",
+    )
+
     session_type = models.CharField(
         max_length=20,
         choices=SessionType.choices,
