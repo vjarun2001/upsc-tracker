@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+{% load tracker_extras %}
+
+{% block title %}
+Activities
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Activities</h3>
+        <p class="text-muted mb-0">Your own categories for the Time Tracker — GS2, Optional, Newspaper, Revision, whatever fits how you actually study.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'timetracker:timer_page' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-stopwatch"></i> Back to Timer
+        </a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+            <i class="bi bi-plus-lg"></i> Add Activity
+        </button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><strong>Active</strong></div>
+    <div class="card-body p-0">
+        {% if active_activities %}
+        <div class="list-group list-group-flush">
+            {% for activity in active_activities %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{% url 'timetracker:activity_detail' activity.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-body">
+                    <span class="badge rounded-pill" style="background:{{ activity.color }};">&nbsp;&nbsp;</span>
+                    <i class="bi {{ activity.icon }}"></i>
+                    <span class="fw-semibold">{{ activity.name }}</span>
+                </a>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editActivityModal{{ activity.pk }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="post" action="{% url 'timetracker:archive_activity' activity.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-warning" title="Archive">
+                            <i class="bi bi-archive"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3 mb-0">No activities yet. Add your first one — e.g. GS2, Optional, Newspaper.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if archived_activities %}
+<div class="card">
+    <div class="card-header"><strong>Archived</strong></div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for activity in archived_activities %}
+            <div class="list-group-item d-flex justify-content-between align-items-center text-muted">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill" style="background:{{ activity.color }};">&nbsp;&nbsp;</span>
+                    <i class="bi {{ activity.icon }}"></i>
+                    <span>{{ activity.name }}</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <form method="post" action="{% url 'timetracker:restore_activity' activity.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-success" title="Restore">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'timetracker:delete_activity' activity.pk %}" onsubmit="return confirm('Delete this activity permanently? Only possible if it has no logged sessions.');">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="modal fade" id="addActivityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'timetracker:add_activity' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for activity in active_activities %}
+<div class="modal fade" id="editActivityModal{{ activity.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'timetracker:edit_activity' activity.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ edit_forms|get_item:activity.pk|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

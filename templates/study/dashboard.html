@@ -45,8 +45,8 @@ Syllabus
     <div class="col-6 col-md-3">
         <div class="stat-card">
             <div class="stat-icon tint-purple"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-value">{{ total_minutes }}</div>
-            <div class="stat-label">Minutes Studied</div>
+            <div class="stat-value">{{ total_minutes|minutes_to_hm }}</div>
+            <div class="stat-label">Time Studied</div>
         </div>
     </div>
 
@@ -119,7 +119,12 @@ Syllabus
                 <strong>
                     Tracker Workbench{% if selected_subject %}: {{ selected_subject.name }}{% endif %}
                 </strong>
-                <div class="text-muted small">Track revision progress with spaced repetition</div>
+                <div class="text-muted small">
+                    Track revision progress with spaced repetition
+                    {% if selected_subject and subject_total_minutes %}
+                    &middot; <span class="fw-semibold">{{ subject_total_minutes|minutes_to_hm }}</span> total time studied
+                    {% endif %}
+                </div>
             </div>
 
             <div class="card-body">
@@ -148,9 +153,14 @@ Syllabus
                                 <td class="text-muted small">
                                     <a href="{% url 'study:topic_log' topic.pk %}" class="text-decoration-none">
                                         {% with minutes=topic_minutes|get_item:topic.pk %}
-                                        {% if minutes %}{{ minutes }}m{% else %}—{% endif %}
+                                        {% if minutes %}{{ minutes|minutes_to_hm }}{% else %}—{% endif %}
                                         {% endwith %}
                                     </a>
+                                    {% if topic.pk in topics_with_children %}
+                                    <div class="text-muted" style="font-size:.75rem;">
+                                        ({{ topic_minutes_rollup|get_item:topic.pk|minutes_to_hm }} incl. sub-topics)
+                                    </div>
+                                    {% endif %}
                                 </td>
                                 <td style="min-width:260px;">
                                     <div class="d-flex gap-1 align-items-center flex-nowrap">

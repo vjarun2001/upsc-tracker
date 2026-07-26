@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load tracker_extras %}
+
+{% block title %}
+Timer
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Time Tracker</h3>
+        <p class="text-muted mb-0">Track how every minute of today actually gets used.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'timetracker:timeline_page' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-list-ul"></i> Timeline
+        </a>
+        <a href="{% url 'timetracker:history' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-bar-chart"></i> History
+        </a>
+        <a href="{% url 'timetracker:activity_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tags"></i> Manage Activities
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-blue"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-value" id="stat-goal">--</div>
+            <div class="stat-label">Goal</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-green"><i class="bi bi-check2-circle"></i></div>
+            <div class="stat-value" id="stat-completed">--</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-value" id="stat-missed">--</div>
+            <div class="stat-label">Missed</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-orange"><i class="bi bi-cup-hot"></i></div>
+            <div class="stat-value" id="stat-break">--</div>
+            <div class="stat-label">Break</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-purple"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value" id="stat-waste">--</div>
+            <div class="stat-label">Wasted</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md">
+        <div class="stat-card">
+            <div class="stat-icon tint-blue"><i class="bi bi-moon-stars"></i></div>
+            <div class="stat-value" id="stat-total-tracked">--</div>
+            <div class="stat-label">Total Tracked</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4 text-center">
+
+                <span id="status-badge" class="badge rounded-pill px-3 py-2 mb-3">Idle</span>
+
+                <div id="elapsed-display" class="display-3 fw-bold mb-1">00:00:00</div>
+                <div id="elapsed-label" class="text-muted mb-4">Nothing running</div>
+
+                <div class="progress mb-4" style="height:10px;">
+                    <div id="goal-progress-bar" class="progress-bar bg-success" style="width:0%;"></div>
+                </div>
+
+                <!-- IDLE: pick an activity and start -->
+                <div data-state-group="idle" class="d-none">
+                    <div class="row text-start g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">Activity</label>
+                            <select id="activity-select" class="form-select">
+                                <option value="">-- Select --</option>
+                                {% for activity in activities %}
+                                <option value="{{ activity.pk }}" data-kind="{{ activity.kind }}">{{ activity.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Subject <span id="subject-required-mark" class="text-danger d-none">*</span></label>
+                            <select id="subject-select" class="form-select">
+                                <option value="">-- None --</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.pk }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Topic <span id="topic-required-mark" class="text-danger d-none">*</span></label>
+                            <select id="topic-select" class="form-select" disabled>
+                                <option value="">-- Select a subject first --</option>
+                            </select>
+                        </div>
+                        <div id="others-note-wrap" class="col-md-12 d-none">
+                            <label class="form-label small">What are you up to? <span class="text-danger">*</span></label>
+                            <input type="text" id="others-note" class="form-control" placeholder="Describe the activity">
+                        </div>
+                    </div>
+                    <div id="start-warning" class="alert alert-warning small d-none"></div>
+                    <button id="btn-start" class="btn btn-primary btn-lg">
+                        <i class="bi bi-play-fill"></i> Start Session
+                    </button>
+                </div>
+
+                <!-- RUNNING: a session is actively being tracked -->
+                <div data-state-group="running" class="d-none">
+                    <button id="btn-pause" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-pause-fill"></i> Pause
+                    </button>
+                    <button id="btn-stop-running" class="btn btn-outline-danger btn-lg">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                </div>
+
+                <!-- PAUSED: resume the same activity, or pick a different one -->
+                <div data-state-group="paused" class="d-none">
+                    <button id="btn-resume" class="btn btn-primary btn-lg mb-3">
+                        <i class="bi bi-play-fill"></i> Resume <span id="resume-activity-name"></span>
+                    </button>
+                    <button id="btn-stop-paused" class="btn btn-outline-danger btn-lg mb-3">
+                        <i class="bi bi-stop-fill"></i> Stop for the Day
+                    </button>
+
+                    <div>
+                        <a href="#" id="toggle-start-something-else" class="small text-decoration-none">
+                            Start a different activity instead <i class="bi bi-chevron-down"></i>
+                        </a>
+                    </div>
+                    <div id="start-something-else-wrap" class="d-none mt-2">
+                        <div class="row text-start g-2 mb-3">
+                            <div class="col-md-4">
+                                <select id="activity-select-paused" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    {% for activity in activities %}
+                                    <option value="{{ activity.pk }}" data-kind="{{ activity.kind }}">{{ activity.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select id="subject-select-paused" class="form-select">
+                                    <option value="">-- None --</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.pk }}">{{ subject.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select id="topic-select-paused" class="form-select" disabled>
+                                    <option value="">-- Select a subject first --</option>
+                                </select>
+                            </div>
+                            <div id="others-note-wrap-paused" class="col-md-12 d-none">
+                                <label class="form-label small">What are you up to? <span class="text-danger">*</span></label>
+                                <input type="text" id="others-note-paused" class="form-control" placeholder="Describe the activity">
+                            </div>
+                        </div>
+                        <div id="start-warning-paused" class="alert alert-warning small d-none"></div>
+                        <button id="btn-start-new" class="btn btn-outline-primary">
+                            <i class="bi bi-play-fill"></i> Start New Session
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ON_BREAK -->
+                <div data-state-group="on_break" class="d-none">
+                    <div id="break-countdown" class="mb-3 fw-semibold"></div>
+                    <button id="btn-end-break" class="btn btn-primary btn-lg">
+                        <i class="bi bi-play-fill"></i> End Break / Resume
+                    </button>
+                </div>
+
+                <div id="break-start-wrap" class="mt-4 pt-3 border-top d-flex justify-content-center gap-2 flex-wrap">
+                    <form id="break-form" class="d-flex gap-2 flex-wrap justify-content-center">
+                        <input type="text" id="break-reason" class="form-control form-control-sm" placeholder="Reason (Tea, Lunch...)" style="width:180px;">
+                        <input type="number" id="break-minutes" class="form-control form-control-sm" placeholder="Minutes" min="1" style="width:100px;">
+                        <button id="btn-start-break" type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-cup-hot"></i> Take a Break
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Today's Sessions</strong>
+            </div>
+            <ul id="session-history" class="list-group list-group-flush">
+                {% for session in recent_sessions %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>
+                        {{ session.activity.name }}
+                        {% if session.topic %}<span class="text-muted small">· {{ session.topic.title }}</span>
+                        {% elif session.subject %}<span class="text-muted small">· {{ session.subject.name }}</span>{% endif %}
+                    </span>
+                    <span>{{ session.duration_seconds|seconds_to_hm }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No sessions logged yet today.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+{{ topics_by_subject|json_script:"topics-by-subject" }}
+{{ initial_summary|json_script:"initial-summary" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/timetracker.js' %}"></script>
+{% endblock %}

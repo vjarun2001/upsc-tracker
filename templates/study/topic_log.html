@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load tracker_extras %}
+
 {% block title %}
 {{ topic.title }} — Time Log
 {% endblock %}
@@ -21,7 +23,7 @@
     <div class="col-6 col-md-3">
         <div class="stat-card">
             <div class="stat-icon tint-purple"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-value">{{ total_minutes }}m</div>
+            <div class="stat-value">{{ total_minutes|minutes_to_hm }}</div>
             <div class="stat-label">{% if period != "all" %}{{ period|title }} {% endif %}Time Spent</div>
         </div>
     </div>
@@ -43,16 +45,16 @@
             All
         </a>
         <a href="?period=morning" class="btn btn-sm {% if period == 'morning' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-sunrise"></i> Morning <span class="badge bg-light text-dark border">{{ bucket_totals.morning }}m</span>
+            <i class="bi bi-sunrise"></i> Morning <span class="badge bg-light text-dark border">{{ bucket_totals.morning|minutes_to_hm }}</span>
         </a>
         <a href="?period=afternoon" class="btn btn-sm {% if period == 'afternoon' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-sun"></i> Afternoon <span class="badge bg-light text-dark border">{{ bucket_totals.afternoon }}m</span>
+            <i class="bi bi-sun"></i> Afternoon <span class="badge bg-light text-dark border">{{ bucket_totals.afternoon|minutes_to_hm }}</span>
         </a>
         <a href="?period=evening" class="btn btn-sm {% if period == 'evening' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-sunset"></i> Evening <span class="badge bg-light text-dark border">{{ bucket_totals.evening }}m</span>
+            <i class="bi bi-sunset"></i> Evening <span class="badge bg-light text-dark border">{{ bucket_totals.evening|minutes_to_hm }}</span>
         </a>
         <a href="?period=night" class="btn btn-sm {% if period == 'night' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-moon-stars"></i> Night <span class="badge bg-light text-dark border">{{ bucket_totals.night }}m</span>
+            <i class="bi bi-moon-stars"></i> Night <span class="badge bg-light text-dark border">{{ bucket_totals.night|minutes_to_hm }}</span>
         </a>
     </div>
 </div>
@@ -80,7 +82,7 @@
                         <td>{{ entry.date|date:"d M Y" }}</td>
                         <td>{{ entry.start_time|time:"h:i A" }}</td>
                         <td>{{ entry.end_time|time:"h:i A" }}</td>
-                        <td><strong>{{ entry.duration_minutes }}m</strong></td>
+                        <td><strong>{{ entry.duration_minutes|minutes_to_hm }}</strong></td>
                         <td class="text-capitalize">{{ entry.bucket }}</td>
                         <td class="text-muted small">{{ entry.source }}</td>
                     </tr>

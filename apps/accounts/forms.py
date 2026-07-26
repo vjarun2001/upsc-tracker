@@ -3,6 +3,7 @@ from django import forms
 from apps.core.models import ExamProfile
 
 from .models import Profile, User
+from .services import seconds_until_cutoff
 
 
 class UserForm(forms.ModelForm):
@@ -32,7 +33,6 @@ class ProfileForm(forms.ModelForm):
             "phone",
             "timezone",
             "bio",
-            "daily_study_target_minutes",
         ]
 
         widgets = {
@@ -60,17 +60,27 @@ class ProfileForm(forms.ModelForm):
                     "placeholder": "A little about your UPSC prep journey",
                 }
             ),
-            "daily_study_target_minutes": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "min": 1,
-                }
-            ),
         }
 
-        labels = {
-            "daily_study_target_minutes": "Daily study goal (minutes)",
-        }
+
+class DailyUnsleptHoursForm(forms.Form):
+    hours = forms.IntegerField(
+        label="Today's Unslept Hours",
+        min_value=1,
+        help_text="How many hours will you be awake and tracking activity today?",
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": 1, "autofocus": True}),
+    )
+
+    def clean_hours(self):
+        hours = self.cleaned_data["hours"]
+        max_allowed = max(1, seconds_until_cutoff() // 3600)
+
+        if hours > max_allowed:
+            raise forms.ValidationError(
+                f"Only {max_allowed}h left today — enter {max_allowed}h or less."
+            )
+
+        return hours
 
 
 class ExamProfileForm(forms.ModelForm):

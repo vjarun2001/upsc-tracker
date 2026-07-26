@@ -40,14 +40,4 @@ urlpatterns = [
         views.delete_task,
         name="delete_task",
     ),
-    path(
-        "pomodoro/",
-        views.pomodoro,
-        name="pomodoro",
-    ),
-    path(
-        "pomodoro/log/",
-        views.log_pomodoro_session,
-        name="log_pomodoro_session",
-    ),
 ]

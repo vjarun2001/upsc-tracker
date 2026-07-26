@@ -13,26 +13,25 @@ from .forms import SubjectForm, TopicForm
 from .models import StudySession
 from .models import Subject
 from .models import Topic
-from .services import descendant_ids, flatten_topics, time_of_day_bucket
+from .services import descendant_ids, flatten_topics, time_of_day_bucket, topic_minutes_with_descendants
 
 
 def _time_spent_per_topic(user, topics):
-    from apps.planner.models import PomodoroSession
+    from apps.timetracker.models import TimerSession
 
     minutes = {topic.pk: 0 for topic in topics}
 
     for session in StudySession.objects.filter(user=user, topic__in=topics):
         minutes[session.topic_id] = minutes.get(session.topic_id, 0) + session.duration_minutes
 
-    focus_sessions = PomodoroSession.objects.filter(
+    timer_sessions = TimerSession.objects.filter(
         user=user,
-        is_completed=True,
-        session_type=PomodoroSession.SessionType.FOCUS,
+        end_at__isnull=False,
         topic__in=topics,
     )
-    for session in focus_sessions:
+    for session in timer_sessions:
         minutes[session.topic_id] = minutes.get(session.topic_id, 0) + round(
-            session.actual_duration_seconds / 60
+            session.duration_seconds / 60
         )
 
     return minutes
@@ -51,20 +50,16 @@ def dashboard(request):
         status=Topic.Status.COMPLETED,
     ).count()
 
-    from apps.planner.models import PomodoroSession
+    from apps.timetracker.models import TimerSession
 
     sessions = StudySession.objects.filter(user=request.user)
 
-    focus_sessions = PomodoroSession.objects.filter(
-        user=request.user,
-        is_completed=True,
-        session_type=PomodoroSession.SessionType.FOCUS,
-    )
+    timer_sessions = TimerSession.objects.filter(user=request.user, end_at__isnull=False)
 
-    total_sessions = sessions.count() + focus_sessions.count()
+    total_sessions = sessions.count() + timer_sessions.count()
 
     total_minutes = sum(session.duration_minutes for session in sessions) + sum(
-        round(session.actual_duration_seconds / 60) for session in focus_sessions
+        round(session.duration_seconds / 60) for session in timer_sessions
     )
 
     selected_subject = None
@@ -80,6 +75,9 @@ def dashboard(request):
 
     move_targets = {}
     topic_minutes = {}
+    topic_minutes_rollup = {}
+    subject_total_minutes = 0
+    topics_with_children = set()
 
     if selected_subject:
         all_subject_topics = list(selected_subject.topics.all())
@@ -94,6 +92,9 @@ def dashboard(request):
             ]
 
         topic_minutes = _time_spent_per_topic(request.user, all_subject_topics)
+        topic_minutes_rollup = topic_minutes_with_descendants(topic_minutes, all_subject_topics)
+        subject_total_minutes = sum(topic_minutes.values())
+        topics_with_children = {t.parent_id for t in all_subject_topics if t.parent_id}
 
     subject_edit_forms = {
         subject.pk: SubjectForm(instance=subject) for subject in subjects
@@ -118,6 +119,9 @@ def dashboard(request):
             "subject_edit_forms": subject_edit_forms,
             "move_targets": move_targets,
             "topic_minutes": topic_minutes,
+            "topic_minutes_rollup": topic_minutes_rollup,
+            "subject_total_minutes": subject_total_minutes,
+            "topics_with_children": topics_with_children,
         },
     )
 
@@ -311,7 +315,7 @@ def reparent_topic(request, pk):
 
 @login_required
 def topic_time_log(request, pk):
-    from apps.planner.models import PomodoroSession
+    from apps.timetracker.models import TimerSession
 
     topic = get_object_or_404(Topic, pk=pk, subject__user=request.user)
 
@@ -328,23 +332,22 @@ def topic_time_log(request, pk):
             }
         )
 
-    focus_sessions = PomodoroSession.objects.filter(
+    timer_sessions = TimerSession.objects.filter(
         user=request.user,
-        is_completed=True,
-        session_type=PomodoroSession.SessionType.FOCUS,
+        end_at__isnull=False,
         topic=topic,
-    )
+    ).select_related("activity")
 
-    for session in focus_sessions:
-        started = timezone.localtime(session.started_at)
-        completed = timezone.localtime(session.completed_at)
+    for session in timer_sessions:
+        started = timezone.localtime(session.start_at)
+        ended = timezone.localtime(session.end_at)
         entries.append(
             {
                 "date": started.date(),
                 "start_time": started.time(),
-                "end_time": completed.time(),
-                "duration_minutes": round(session.actual_duration_seconds / 60),
-                "source": "Focus Timer",
+                "end_time": ended.time(),
+                "duration_minutes": round(session.duration_seconds / 60),
+                "source": f"Timer — {session.activity.name}",
             }
         )
 

@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "apps.activity",
     "apps.calendarapp",
     "apps.tracker",
+    "apps.timetracker",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.accounts.middleware.DailyCheckInMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from apps.goals.models import Goal
 from apps.mocktest.models import MockTest
 from apps.notes.models import Note
-from apps.planner.models import DailyTask, PomodoroSession
+from apps.planner.models import DailyTask
 from apps.study.models import StudySession
 
 from .services import log_activity
@@ -43,20 +43,6 @@ def on_mock_test_created(sender, instance, created, **kwargs):
             f"Logged mock test: {instance.name} ({instance.obtained_marks} marks)",
             url="/mocktest/",
             icon="bi-clipboard-data",
-        )
-
-
-@receiver(post_save, sender=PomodoroSession)
-def on_pomodoro_session_created(sender, instance, created, **kwargs):
-    if created:
-        state = "Completed" if instance.is_completed else "Stopped"
-        minutes = round(instance.actual_duration_seconds / 60)
-        log_activity(
-            instance.user,
-            "pomodoro",
-            f"{state} a {instance.get_session_type_display()} session ({minutes} min)",
-            url="/planner/pomodoro/",
-            icon="bi-stopwatch",
         )
 
 

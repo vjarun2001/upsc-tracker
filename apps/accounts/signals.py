@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from .models import LoginSession, Profile, User
+from .services import seconds_until_cutoff
 
 
 @receiver(post_save, sender=User)
@@ -22,6 +23,11 @@ def start_login_session(sender, request, user, **kwargs):
         login_at=now,
         last_seen_at=now,
     )
+
+    # Force a fresh login (and re-collection of the day's Unslept Hours) every day —
+    # the session cookie itself expires at 23:59:59 tonight, not on a rolling window.
+    if request is not None:
+        request.session.set_expiry(seconds_until_cutoff())
 
 
 @receiver(user_logged_out)

@@ -1,4 +1,3 @@
-import json
 from datetime import date, timedelta
 
 from django.contrib import messages
@@ -6,15 +5,14 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from apps.study.models import Subject
 
-from .forms import DailyTaskForm, PomodoroSessionLogForm
-from .models import DailyTask, PomodoroSession
+from .forms import DailyTaskForm
+from .models import DailyTask
 from .services import mark_task_completed
 
 
@@ -196,85 +194,3 @@ def delete_task(request, pk):
     return JsonResponse({"ok": True, "id": pk})
 
 
-@login_required
-def pomodoro(request):
-    today = timezone.localdate()
-
-    today_tasks = DailyTask.objects.filter(user=request.user, date=today)
-    subjects = Subject.objects.filter(user=request.user).prefetch_related("topics")
-
-    recent_sessions = PomodoroSession.objects.filter(
-        user=request.user,
-        started_at__date=today,
-    ).select_related("task", "subject", "topic")
-
-    preselected_task = request.GET.get("task")
-    preselected_subject = request.GET.get("subject")
-
-    client_config = {
-        "log_url": reverse("planner:log_pomodoro_session"),
-        "preselected_task": preselected_task,
-        "preselected_subject": preselected_subject,
-    }
-
-    topics_by_subject = {
-        subject.pk: [{"id": topic.pk, "title": topic.title} for topic in subject.topics.all()]
-        for subject in subjects
-    }
-
-    from apps.analytics.services import compute_current_streak
-
-    from . import services
-
-    stats = services.timer_stats(request.user)
-    stats["streak"] = compute_current_streak(request.user)
-
-    return render(
-        request,
-        "planner/pomodoro.html",
-        {
-            "today_tasks": today_tasks,
-            "subjects": subjects,
-            "recent_sessions": recent_sessions,
-            "client_config": client_config,
-            "topics_by_subject": topics_by_subject,
-            "stats": stats,
-        },
-    )
-
-
-@require_POST
-@login_required
-def log_pomodoro_session(request):
-    try:
-        payload = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"ok": False, "errors": "Invalid JSON."}, status=400)
-
-    form = PomodoroSessionLogForm(data=payload, user=request.user)
-
-    if not form.is_valid():
-        return JsonResponse({"ok": False, "errors": form.errors}, status=400)
-
-    session = form.save(commit=False)
-
-    session.user = request.user
-    session.completed_at = timezone.now()
-    session.started_at = session.completed_at - timedelta(
-        seconds=session.actual_duration_seconds
-    )
-
-    session.save()
-
-    return JsonResponse(
-        {
-            "ok": True,
-            "session": {
-                "id": session.pk,
-                "session_type": session.get_session_type_display(),
-                "is_completed": session.is_completed,
-                "actual_duration_seconds": session.actual_duration_seconds,
-            },
-        },
-        status=201,
-    )

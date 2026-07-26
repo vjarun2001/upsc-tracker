@@ -62,13 +62,6 @@ urlpatterns = [
         ),
     ),
     path(
-        "activity/",
-        include(
-            ("apps.activity.urls", "activity"),
-            namespace="activity",
-        ),
-    ),
-    path(
         "calendar/",
         include(
             ("apps.calendarapp.urls", "calendarapp"),
@@ -80,6 +73,13 @@ urlpatterns = [
         include(
             ("apps.tracker.urls", "tracker"),
             namespace="tracker",
+        ),
+    ),
+    path(
+        "timer/",
+        include(
+            ("apps.timetracker.urls", "timetracker"),
+            namespace="timetracker",
         ),
     ),
 ]

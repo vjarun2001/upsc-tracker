@@ -14,10 +14,12 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet
 
+from apps.common.utils import format_minutes_hm, minutes_to_hours
 from apps.mocktest.models import MockTest
-from apps.planner.models import DailyTask, PomodoroSession
+from apps.planner.models import DailyTask
 from apps.revision.models import RevisionSchedule
 from apps.study.models import StudySession, Subject, Topic
+from apps.timetracker.models import TimerSession
 from apps.tracker.models import Tracker, TrackerLog
 
 from . import services
@@ -49,10 +51,8 @@ def _analytics_context(user):
             s.duration_minutes for s in StudySession.objects.filter(user=user)
         )
         + sum(
-            round(p.actual_duration_seconds / 60)
-            for p in PomodoroSession.objects.filter(
-                user=user, is_completed=True, session_type=PomodoroSession.SessionType.FOCUS
-            )
+            round(s.duration_seconds / 60)
+            for s in TimerSession.objects.filter(user=user, end_at__isnull=False)
         ),
         "total_mock_tests": MockTest.objects.filter(user=user).count(),
         "revision_percent": services.revision_completion_summary(user),
@@ -64,7 +64,7 @@ def _analytics_context(user):
             "daily_labels": daily_labels,
             "daily_minutes": daily_minutes,
             "week_labels": week_labels,
-            "week_minutes": week_minutes,
+            "week_hours": [minutes_to_hours(m) for m in week_minutes],
             "week_dates": week_dates,
             "week_breakdown": week_breakdown,
             "trend_labels": trend_labels,
@@ -117,7 +117,7 @@ def dashboard(request):
 
     health_trackers = Tracker.objects.filter(
         user=request.user, is_active=True, category=Tracker.Category.HEALTH
-    )
+    ).exclude(name__iexact="sleep")
     health_rows = [
         {"tracker": tracker, "today_log": today_logs_by_tracker.get(tracker.pk)}
         for tracker in health_trackers
@@ -159,7 +159,7 @@ def export_pdf(request):
         ["Subjects", context["total_subjects"]],
         ["Topics", context["total_topics"]],
         ["Completed Topics", context["completed_topics"]],
-        ["Total Minutes Studied", context["total_minutes"]],
+        ["Total Time Studied", format_minutes_hm(context["total_minutes"])],
         ["Mock Tests Taken", context["total_mock_tests"]],
     ]
 
@@ -179,14 +179,15 @@ def export_pdf(request):
     story.append(summary_table)
     story.append(Spacer(1, 0.8 * cm))
 
-    story.append(Paragraph("Minutes Studied Per Subject", styles["Heading2"]))
+    story.append(Paragraph("Time Studied Per Subject", styles["Heading2"]))
 
-    subject_rows = [["Subject", "Minutes"]] + list(
-        zip(
+    subject_rows = [["Subject", "Time"]] + [
+        (label, format_minutes_hm(minutes))
+        for label, minutes in zip(
             context["chart_data"]["subject_labels"] or ["-"],
             context["chart_data"]["subject_minutes"] or [0],
         )
-    )
+    ]
     subject_table = Table(subject_rows, colWidths=[8 * cm, 8 * cm])
     subject_table.setStyle(
         TableStyle(

@@ -43,3 +43,15 @@ def descendant_ids(topic, all_topics):
     walk(topic.id)
 
     return ids
+
+
+def topic_minutes_with_descendants(topic_minutes, all_topics):
+    """Roll each topic's own minutes up with every descendant's minutes.
+
+    E.g. time logged against "Calculus" (a child of "Algebra") also counts toward
+    Algebra's total here — leaf topics are unaffected (their rollup equals their own time).
+    """
+    return {
+        t.pk: topic_minutes.get(t.pk, 0) + sum(topic_minutes.get(d, 0) for d in descendant_ids(t, all_topics))
+        for t in all_topics
+    }

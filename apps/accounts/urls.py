@@ -15,4 +15,9 @@ urlpatterns = [
         views.heartbeat,
         name="heartbeat",
     ),
+    path(
+        "daily-hours/",
+        views.daily_unslept_hours,
+        name="daily_hours",
+    ),
 ]

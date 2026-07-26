@@ -21,13 +21,16 @@
             <i class="bi bi-grid-1x2-fill"></i><span class="sidebar-label">Dashboard</span>
         </a>
 
-        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'planner' and 'pomodoro' not in request.path %}active{% endif %}" href="{% url 'planner:board' %}">
+        {# Tasks and Calendar hidden for now — restore these two nav items to bring them back. #}
+        {% comment %}
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'planner' %}active{% endif %}" href="{% url 'planner:board' %}">
             <i class="bi bi-clipboard-check"></i><span class="sidebar-label">Tasks</span>
         </a>
 
         <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'calendarapp' %}active{% endif %}" href="{% url 'calendarapp:day_today' %}">
             <i class="bi bi-calendar3"></i><span class="sidebar-label">Calendar</span>
         </a>
+        {% endcomment %}
 
         <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'study' %}active{% endif %}" href="{% url 'study:dashboard' %}">
             <i class="bi bi-journal-bookmark"></i><span class="sidebar-label">Syllabus</span>
@@ -41,7 +44,7 @@
             <i class="bi bi-bar-chart-line"></i><span class="sidebar-label">Test Analytics</span>
         </a>
 
-        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'planner' and 'pomodoro' in request.path %}active{% endif %}" href="{% url 'planner:pomodoro' %}">
+        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'timetracker' %}active{% endif %}" href="{% url 'timetracker:timer_page' %}">
             <i class="bi bi-stopwatch"></i><span class="sidebar-label">Timer</span>
         </a>
 
@@ -57,10 +60,6 @@
 
         <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'goals' %}active{% endif %}" href="{% url 'goals:list' %}">
             <i class="bi bi-flag"></i><span class="sidebar-label">Goals</span>
-        </a>
-
-        <a class="sidebar-nav-item {% if request.resolver_match.namespace == 'activity' %}active{% endif %}" href="{% url 'activity:today' %}">
-            <i class="bi bi-lightning-charge"></i><span class="sidebar-label">Activity</span>
         </a>
 
     </nav>

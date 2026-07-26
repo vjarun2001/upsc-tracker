@@ -76,6 +76,7 @@ class Profile(models.Model):
     timezone = models.CharField(
         max_length=64,
         default="Asia/Kolkata",
+        blank=True,
     )
 
     bio = models.TextField(
@@ -104,6 +105,8 @@ class LoginSession(models.Model):
     logout_at = models.DateTimeField(null=True, blank=True)
 
     quote_shown = models.BooleanField(default=False)
+
+    hours_collected = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-login_at"]

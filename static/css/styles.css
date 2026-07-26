@@ -584,3 +584,5 @@ footer{
 [data-bs-theme="light"] .sidebar-nav-item.active{ background:var(--gold); color:#151515; }
 [data-bs-theme="light"] .sidebar-section-title{ color:#8a8f9a; }
 [data-bs-theme="light"] .sidebar-footer{ border-top-color:#e9ecef; }
+
+[data-bs-theme="dark"] .stat-label{ color:#c9cdd6; }

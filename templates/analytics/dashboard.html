@@ -31,7 +31,7 @@ Dashboard
                 <div class="progress-ring" style="--percent: {{ recap.study_percent }};">
                     <div class="progress-ring-inner">
                         <span>{{ recap.study_percent }}%</span>
-                        <small class="text-muted">of {{ recap.daily_target_minutes }}m</small>
+                        <small class="text-muted">of {{ recap.daily_target_minutes|minutes_to_hm }}</small>
                     </div>
                 </div>
             </div>
@@ -47,6 +47,9 @@ Dashboard
                     {% empty %}
                     <span class="text-muted">Nothing logged yet — get started!</span>
                     {% endfor %}
+                    <span class="badge bg-light text-dark border" title="Estimated as 24h minus today's Unslept Hours entry — not a tracked value">
+                        <i class="bi bi-moon-stars"></i> &asymp; Sleep: {{ recap.sleep_hours_approx }}h (approx.){% if recap.first_start_time %} &middot; since {{ recap.first_start_time|time:"g:i A" }}{% endif %}
+                    </span>
                 </div>
 
             </div>
@@ -145,7 +148,7 @@ Dashboard
         <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong><i class="bi bi-clock text-muted"></i> STUDY MINUTES</strong>
+                    <strong><i class="bi bi-clock text-muted"></i> STUDY HOURS</strong>
                     <small class="text-muted">Click a bar for details</small>
                 </div>
                 <canvas id="weekChart" height="160"></canvas>
@@ -242,10 +245,10 @@ Dashboard
         <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong><i class="bi bi-stopwatch text-muted"></i> POMODORO</strong>
-                    <a href="{% url 'planner:pomodoro' %}" class="small">Timer &rarr;</a>
+                    <strong><i class="bi bi-stopwatch text-muted"></i> TIME TRACKER</strong>
+                    <a href="{% url 'timetracker:timer_page' %}" class="small">Timer &rarr;</a>
                 </div>
-                <p class="text-muted mb-0">Ready to focus? Start a session from the Timer page.</p>
+                <p class="text-muted mb-0">Track how today's time actually gets used — start a session from the Timer page.</p>
             </div>
         </div>
     </div>
@@ -326,14 +329,22 @@ Dashboard
 <script>
     const chartData = JSON.parse(document.getElementById("chart-data").textContent);
 
+    function formatHoursHM(hours) {
+        const totalMinutes = Math.max(0, Math.round((hours || 0) * 60));
+        return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
+    }
+
     const weekChart = new Chart(document.getElementById("weekChart"), {
         type: "bar",
         data: {
             labels: chartData.week_labels,
-            datasets: [{ label: "Minutes", data: chartData.week_minutes, backgroundColor: "#f0635a", borderRadius: 6 }],
+            datasets: [{ label: "Hours", data: chartData.week_hours, backgroundColor: "#f0635a", borderRadius: 6 }],
         },
         options: {
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${formatHoursHM(ctx.parsed.y)}` } },
+            },
             onClick: (evt) => {
                 const points = weekChart.getElementsAtEventForMode(evt, "nearest", { intersect: true }, true);
                 if (!points.length) return;
@@ -362,7 +373,7 @@ Dashboard
                         labelSpan.textContent = entry.label;
 
                         const minutesStrong = document.createElement("strong");
-                        minutesStrong.textContent = `${entry.minutes}m`;
+                        minutesStrong.textContent = formatHoursHM(entry.minutes / 60);
 
                         li.appendChild(labelSpan);
                         li.appendChild(minutesStrong);
