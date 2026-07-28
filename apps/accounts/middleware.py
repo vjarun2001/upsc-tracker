@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from .models import LoginSession
+from .services import hours_collected_today
 
 EXEMPT_PREFIXES = (
     "/accounts/",
@@ -34,10 +34,4 @@ class DailyCheckInMiddleware:
         if request.path.startswith(EXEMPT_PREFIXES):
             return False
 
-        session = (
-            LoginSession.objects.filter(user=user, logout_at__isnull=True)
-            .order_by("-login_at")
-            .first()
-        )
-
-        return bool(session and not session.hours_collected)
+        return not hours_collected_today(user)

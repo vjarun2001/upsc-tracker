@@ -13,7 +13,7 @@ from .forms import ExamProfileForm
 from .forms import ProfileForm
 from .forms import UserForm
 from .models import LoginSession
-from .services import today_seconds
+from .services import hours_collected_today, today_seconds
 
 
 
@@ -92,14 +92,14 @@ def profile(request):
 
 @login_required
 def daily_unslept_hours(request):
+    if hours_collected_today(request.user):
+        return redirect("analytics:dashboard")
+
     session = (
         LoginSession.objects.filter(user=request.user, logout_at__isnull=True)
         .order_by("-login_at")
         .first()
     )
-
-    if session and session.hours_collected:
-        return redirect("analytics:dashboard")
 
     if request.method == "POST":
         form = DailyUnsleptHoursForm(request.POST)

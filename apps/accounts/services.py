@@ -21,3 +21,14 @@ def seconds_until_cutoff():
     cutoff = timezone.make_aware(datetime.combine(now.date(), dtime(23, 59, 59)), now.tzinfo)
 
     return max(0, int((cutoff - now).total_seconds()))
+
+
+def hours_collected_today(user):
+    """Whether this user has already submitted today's Unslept Hours, in ANY
+    LoginSession — not just the current one. A session can end early for reasons
+    that have nothing to do with a new day starting (browser crash, laptop losing
+    power, manually logging out, clearing cookies); re-logging in the same day
+    must not re-trigger the prompt just because a fresh LoginSession row exists."""
+    return LoginSession.objects.filter(
+        user=user, date=timezone.localdate(), hours_collected=True
+    ).exists()

@@ -63,6 +63,23 @@ class DailyCheckInMiddlewareTests(TestCase):
         response = self.client.get(reverse("analytics:dashboard"))
         self.assertEqual(response.status_code, 200)
 
+    def test_crash_and_relogin_same_day_does_not_reprompt(self):
+        """A browser crash / laptop power loss ends the session early, unrelated to a
+        new day starting — logging back in the SAME day must not re-trigger the prompt
+        just because a fresh LoginSession row was created."""
+        self.client.login(email="checkin-tester@example.com", password="testpass123")
+        first_session = LoginSession.objects.filter(user=self.user).order_by("-login_at").first()
+        first_session.hours_collected = True
+        first_session.save(update_fields=["hours_collected"])
+
+        # Simulate the crash: the old session is gone, a brand new login happens later
+        # the same day (a fresh LoginSession row, hours_collected defaults back to False).
+        new_client = self.client_class()
+        new_client.login(email="checkin-tester@example.com", password="testpass123")
+
+        response = new_client.get(reverse("analytics:dashboard"))
+        self.assertEqual(response.status_code, 200)
+
     def test_staff_user_exempt(self):
         staff = User.objects.create_user(email="staff-tester@example.com", password="testpass123", is_staff=True)
         self.client.login(email="staff-tester@example.com", password="testpass123")
